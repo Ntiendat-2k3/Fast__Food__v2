@@ -68,7 +68,10 @@ const ProductDetail = () => {
 
   const handleBuyNow = () => {
     if (foodItem) {
-      addToCart(foodItem.name, quantity) // Sử dụng name thay vì ID
+      // Clear the cart first
+      //setCartItems({}) //Cannot read properties of undefined (reading 'setCartItems')
+      // Then add only this product
+      addToCart(foodItem.name, quantity)
       navigate("/order")
     }
   }

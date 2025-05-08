@@ -98,6 +98,8 @@ const MyOrders = () => {
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
       case "Thanh toán thất bại":
         return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+      case "Chưa thanh toán":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
     }
@@ -187,7 +189,7 @@ const MyOrders = () => {
                       className={`px-2.5 py-1 rounded-full text-xs font-medium flex items-center ${getStatusColor(order.status)}`}
                     >
                       {getStatusIcon(order.status)}
-                      <span className="ml-1">{order.status}</span>
+                      <span className="ml-1">{order.status || "Đang xử lý"}</span>
                     </span>
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(order.paymentStatus)}`}

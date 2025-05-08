@@ -41,6 +41,10 @@ const PlaceOrder = () => {
     phone: "",
   })
 
+  const [voucherCode, setVoucherCode] = useState("")
+  const [isApplyingVoucher, setIsApplyingVoucher] = useState(false)
+  const [voucherError, setVoucherError] = useState("")
+
   const onChangeHandler = (event) => {
     const name = event.target.name
     const value = event.target.value
@@ -86,6 +90,39 @@ const PlaceOrder = () => {
 
     setErrors(newErrors)
     return isValid
+  }
+
+  const handleApplyVoucher = async () => {
+    if (!voucherCode.trim()) {
+      setVoucherError("Vui lòng nhập mã giảm giá")
+      return
+    }
+
+    setIsApplyingVoucher(true)
+    setVoucherError("")
+
+    try {
+      const response = await axios.post(`${url}/api/voucher/apply`, {
+        code: voucherCode,
+        orderAmount: getTotalCartAmount(),
+      })
+
+      if (response.data.success) {
+        navigate("/order", {
+          state: {
+            appliedVoucher: response.data.data,
+          },
+        })
+        toast.success("Áp dụng mã giảm giá thành công")
+      } else {
+        setVoucherError(response.data.message || "Mã giảm giá không hợp lệ")
+      }
+    } catch (error) {
+      console.error("Error applying voucher:", error)
+      setVoucherError("Đã xảy ra lỗi khi áp dụng mã giảm giá")
+    } finally {
+      setIsApplyingVoucher(false)
+    }
   }
 
   const placeOrder = async (event) => {
@@ -459,6 +496,40 @@ const PlaceOrder = () => {
                     <span>- {appliedVoucher.discountAmount.toLocaleString("vi-VN")} đ</span>
                   </div>
                 )}
+
+                <div className="border-t border-gray-300 dark:border-dark-lighter pt-3 mb-3">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Mã giảm giá (nếu có)
+                  </label>
+                  <div className="flex">
+                    <div className="relative flex-1">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Tag size={18} className="text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Nhập mã giảm giá..."
+                        value={voucherCode}
+                        onChange={(e) => {
+                          setVoucherCode(e.target.value)
+                          setVoucherError("")
+                        }}
+                        className="pl-10 block w-full bg-white dark:bg-dark text-dark dark:text-white border border-gray-300 dark:border-dark-lighter rounded-l-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <button
+                      onClick={handleApplyVoucher}
+                      disabled={isApplyingVoucher}
+                      className="bg-primary hover:bg-primary-light text-dark py-2 px-4 rounded-r-lg transition-colors disabled:opacity-70 flex items-center"
+                    >
+                      {isApplyingVoucher ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-dark mr-2"></div>
+                      ) : null}
+                      Áp dụng
+                    </button>
+                  </div>
+                  {voucherError && <p className="mt-1 text-sm text-red-500">{voucherError}</p>}
+                </div>
 
                 <div className="pt-3 flex justify-between">
                   <span className="text-lg font-medium text-dark dark:text-white">Tổng cộng</span>

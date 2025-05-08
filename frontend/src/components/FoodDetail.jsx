@@ -13,7 +13,7 @@ const FoodDetail = () => {
   }, [])
 
   const { id } = useParams()
-  const { cartItems, addToCart, removeFromCart, url } = useContext(StoreContext)
+  const { cartItems, addToCart, removeFromCart, url, setCartItems } = useContext(StoreContext)
   const { food_list } = useContext(StoreContext)
   const navigate = useNavigate()
 
@@ -36,6 +36,9 @@ const FoodDetail = () => {
 
   const handlePayment = () => {
     if (foodItem) {
+      // Clear the cart first
+      setCartItems({})
+      // Then add only this product
       addToCart(foodItem.name, quantity)
       navigate("/order")
     }

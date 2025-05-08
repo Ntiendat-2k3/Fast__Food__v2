@@ -5,6 +5,9 @@ import { useParams, useNavigate } from "react-router-dom"
 import { ToastContainer, toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import { ArrowLeft, Copy, CheckCircle, Landmark } from "lucide-react"
+import axios from "axios"
+import { useContext } from "react"
+import { StoreContext } from "../../context/StoreContext"
 
 const Payment = () => {
   const { method, orderId } = useParams()
@@ -12,10 +15,11 @@ const Payment = () => {
   const [copied, setCopied] = useState(false)
   const [countdown, setCountdown] = useState(300) // 5 phút
   const [isProcessing, setIsProcessing] = useState(false)
+  const { url } = useContext(StoreContext)
 
   // Thông tin tài khoản ngân hàng
   const bankInfo = {
-    name: "NGUYEN VAN A",
+    name: "GreenEats Shop",
     number: "1234567890",
     bank: "Vietcombank",
     branch: "Hà Nội",
@@ -25,7 +29,7 @@ const Payment = () => {
   // Thông tin ví điện tử
   const walletInfo = {
     phone: "0912345678",
-    name: "Nguyễn Văn A",
+    name: "GreenEats Shop",
     content: `GreenEats ${orderId?.slice(-6) || ""}`,
   }
 
@@ -60,20 +64,48 @@ const Payment = () => {
   }
 
   // Xử lý hoàn thành thanh toán
-  const handleCompletePayment = () => {
+  const handleCompletePayment = async () => {
     setIsProcessing(true)
-    // Mô phỏng xử lý thanh toán
-    setTimeout(() => {
-      toast.success("Thanh toán thành công!")
-      setTimeout(() => {
-        navigate("/thankyou")
-      }, 2000)
-    }, 1500)
+
+    try {
+      // Gọi API để cập nhật trạng thái thanh toán
+      const response = await axios.post(`${url}/api/order/verify`, {
+        orderId: orderId,
+        success: "true",
+        paymentMethod: method,
+      })
+
+      if (response.data.success) {
+        toast.success("Thanh toán thành công!")
+        setTimeout(() => {
+          navigate("/thankyou")
+        }, 2000)
+      } else {
+        toast.error(response.data.message || "Có lỗi xảy ra khi xác nhận thanh toán")
+        setIsProcessing(false)
+      }
+    } catch (error) {
+      console.error("Lỗi khi xác nhận thanh toán:", error)
+      toast.error("Có lỗi xảy ra khi xác nhận thanh toán")
+      setIsProcessing(false)
+    }
   }
 
   // Xử lý hủy thanh toán
-  const handleCancelPayment = () => {
-    navigate("/cart")
+  const handleCancelPayment = async () => {
+    try {
+      // Gọi API để cập nhật trạng thái thanh toán thành thất bại
+      await axios.post(`${url}/api/order/verify`, {
+        orderId: orderId,
+        success: "false",
+        paymentMethod: method,
+      })
+
+      navigate("/cart")
+    } catch (error) {
+      console.error("Lỗi khi hủy thanh toán:", error)
+      navigate("/cart")
+    }
   }
 
   return (

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 import axios from "axios"
+import ReactPaginate from "react-paginate"
 import {
   Package,
   Clock,
@@ -15,8 +16,11 @@ import {
   CreditCard,
   Wallet,
   Landmark,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import ConfirmModal from "../../components/ConfirmModal"
+import "../List/pagination.css"
 
 const Orders = ({ url }) => {
   const [orders, setOrders] = useState([])
@@ -32,14 +36,30 @@ const Orders = ({ url }) => {
     message: "",
   })
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(0)
+  const itemsPerPage = 20
+  const pageCount = Math.ceil(filteredOrders.length / itemsPerPage)
+  const offset = currentPage * itemsPerPage
+  const currentItems = filteredOrders.slice(offset, offset + itemsPerPage)
+
+  // Handle page change
+  const handlePageChange = ({ selected }) => {
+    setCurrentPage(selected)
+  }
+
   // Fetch all orders from API
   const fetchAllOrders = async () => {
     setLoading(true)
     try {
       const response = await axios.get(url + "/api/order/list")
       if (response.data.success) {
-        setOrders(response.data.data)
-        setFilteredOrders(response.data.data)
+        // Sort orders by date (newest first)
+        const sortedOrders = response.data.data.sort((a, b) => {
+          return new Date(b.date) - new Date(a.date)
+        })
+        setOrders(sortedOrders)
+        setFilteredOrders(sortedOrders)
       } else {
         toast.error(response.data.message || "Lỗi khi tải danh sách đơn hàng")
       }
@@ -114,6 +134,7 @@ const Orders = ({ url }) => {
     }
 
     setFilteredOrders(filtered)
+    setCurrentPage(0) // Reset to first page when filters change
   }, [searchTerm, statusFilter, orders])
 
   // Get status icon based on status
@@ -170,6 +191,8 @@ const Orders = ({ url }) => {
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
       case "Thanh toán thất bại":
         return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+      case "Chưa thanh toán":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300"
     }
@@ -250,7 +273,7 @@ const Orders = ({ url }) => {
           </div>
         ) : filteredOrders.length > 0 ? (
           <div className="space-y-4">
-            {filteredOrders.map((order) => (
+            {currentItems.map((order) => (
               <div
                 key={order._id}
                 className="bg-white dark:bg-dark rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-dark-lighter"
@@ -360,6 +383,32 @@ const Orders = ({ url }) => {
                 </div>
               </div>
             ))}
+
+            {/* Pagination */}
+            {pageCount > 1 && (
+              <div className="flex justify-center mt-6">
+                <ReactPaginate
+                  previousLabel={<ChevronLeft size={16} />}
+                  nextLabel={<ChevronRight size={16} />}
+                  breakLabel={"..."}
+                  pageCount={pageCount}
+                  marginPagesDisplayed={2}
+                  pageRangeDisplayed={3}
+                  onPageChange={handlePageChange}
+                  containerClassName={"pagination"}
+                  pageClassName={"pagination-item"}
+                  pageLinkClassName={"pagination-link"}
+                  previousClassName={"pagination-item"}
+                  previousLinkClassName={"pagination-link"}
+                  nextClassName={"pagination-item"}
+                  nextLinkClassName={"pagination-link"}
+                  breakClassName={"pagination-item"}
+                  breakLinkClassName={"pagination-link"}
+                  activeClassName={"active"}
+                  forcePage={currentPage}
+                />
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-12 bg-gray-50 dark:bg-dark-lighter rounded-xl">
