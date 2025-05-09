@@ -5,9 +5,8 @@ import axios from "axios"
 import { toast } from "react-toastify"
 import { Search, Trash2, Filter, RefreshCw, Edit } from "lucide-react"
 import EditFoodModal from "./EditFoodModal"
-import ReactPaginate from "react-paginate"
+import Pagination from "../../components/Pagination"
 import ConfirmModal from "../../components/ConfirmModal"
-import "./pagination.css"
 
 const List = ({ url }) => {
   const [list, setList] = useState([])
@@ -19,10 +18,9 @@ const List = ({ url }) => {
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, itemId: null })
 
   // Pagination states
-  const [pageCount, setPageCount] = useState(0)
-  const [currentPage, setCurrentPage] = useState(0)
-  const [displayedItems, setDisplayedItems] = useState([])
-  const itemsPerPage = 16
+  const [currentPage, setCurrentPage] = useState(1)
+  const [filteredItems, setFilteredItems] = useState([])
+  const itemsPerPage = 10
 
   const categories = ["Tất cả", "Burger", "Burito", "Gà", "Hot dog", "Pasta", "Salad", "Sandwich", "Tart"]
 
@@ -63,35 +61,41 @@ const List = ({ url }) => {
 
   useEffect(() => {
     // Filter items based on search term
-    let filteredItems = list
+    let filtered = list
     if (searchTerm.trim() !== "") {
-      filteredItems = list.filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      filtered = list.filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
     }
 
-    // Calculate pagination
-    setPageCount(Math.ceil(filteredItems.length / itemsPerPage))
+    setFilteredItems(filtered)
+    setCurrentPage(1) // Reset to first page when filters change
+  }, [list, searchTerm])
 
-    // Get current page items
-    const startIndex = currentPage * itemsPerPage
-    const endIndex = startIndex + itemsPerPage
-    setDisplayedItems(filteredItems.slice(startIndex, endIndex))
-  }, [list, searchTerm, currentPage])
+  // Get current page items
+  const getCurrentItems = () => {
+    const indexOfLastItem = currentPage * itemsPerPage
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage
+    return filteredItems.slice(indexOfFirstItem, indexOfLastItem)
+  }
+
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage)
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber)
+  }
 
   const handleSearch = (e) => {
     e.preventDefault()
-    setCurrentPage(0) // Reset to first page on new search
     if (searchTerm.trim() === "") {
       fetchList(selectedCategory)
     } else {
       const filteredList = list.filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      setList(filteredList)
+      setFilteredItems(filteredList)
     }
   }
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category)
     setSearchTerm("")
-    setCurrentPage(0) // Reset to first page on category change
   }
 
   const handleEditClick = (food) => {
@@ -103,10 +107,6 @@ const List = ({ url }) => {
     fetchList(selectedCategory)
     setEditModalOpen(false)
     setCurrentFood(null)
-  }
-
-  const handlePageChange = ({ selected }) => {
-    setCurrentPage(selected)
   }
 
   const handleDeleteClick = (foodId) => {
@@ -122,6 +122,8 @@ const List = ({ url }) => {
     }
     setConfirmModal({ isOpen: false, itemId: null })
   }
+
+  const currentItems = getCurrentItems()
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -181,10 +183,10 @@ const List = ({ url }) => {
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           </div>
-        ) : displayedItems.length > 0 ? (
+        ) : currentItems.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {displayedItems.map((item) => (
+              {currentItems.map((item) => (
                 <div
                   key={item._id}
                   className="bg-white dark:bg-dark rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow border border-gray-100 dark:border-dark-lighter"
@@ -227,22 +229,7 @@ const List = ({ url }) => {
             </div>
 
             {/* Pagination */}
-            {pageCount > 1 && (
-              <div className="pagination-container mt-8">
-                <ReactPaginate
-                  previousLabel={"←"}
-                  nextLabel={"→"}
-                  pageCount={pageCount}
-                  onPageChange={handlePageChange}
-                  containerClassName={"pagination"}
-                  previousLinkClassName={"pagination__link"}
-                  nextLinkClassName={"pagination__link"}
-                  disabledClassName={"pagination__link--disabled"}
-                  activeClassName={"pagination__link--active"}
-                  forcePage={currentPage}
-                />
-              </div>
-            )}
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
           </>
         ) : (
           <div className="text-center py-12 bg-gray-50 dark:bg-dark-lighter rounded-xl">

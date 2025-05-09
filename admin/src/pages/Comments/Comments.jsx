@@ -3,19 +3,79 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { toast } from "react-toastify"
-import { MessageSquare, Star, Check, X, Trash2, Search, Filter, RefreshCw, Tag } from "lucide-react"
+import {
+  MessageSquare,
+  Star,
+  Check,
+  X,
+  Trash2,
+  Search,
+  Filter,
+  RefreshCw,
+  Tag,
+  Bell,
+  UserX,
+  Send,
+  User,
+  Calendar,
+  Clock,
+  Reply,
+  Eye,
+  EyeOff,
+  MessageCircle,
+  Shield,
+} from "lucide-react"
 import ConfirmModal from "../../components/ConfirmModal"
+import Pagination from "../../components/Pagination"
 
 const Comments = ({ url }) => {
+  const [activeTab, setActiveTab] = useState("comments") // "comments", "notifications", or "blacklist"
   const [comments, setComments] = useState([])
+  const [notifications, setNotifications] = useState([])
+  const [feedback, setFeedback] = useState([])
+  const [blacklist, setBlacklist] = useState([])
+  const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [notificationsLoading, setNotificationsLoading] = useState(false)
+  const [blacklistLoading, setBlacklistLoading] = useState(false)
   const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState("all")
-  const [confirmModal, setConfirmModal] = useState({ isOpen: false, commentId: null })
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null, id: null, message: "" })
   const [foodList, setFoodList] = useState([])
   const [categories, setCategories] = useState([])
+  const [orderData, setOrderData] = useState([])
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  const [chartType, setChartType] = useState("bar") // "bar" or "pie"
+  const [orderStatuses, setOrderStatuses] = useState([]) // To store all available order statuses
+  const [debugInfo, setDebugInfo] = useState(null) // For debugging purposes
+
+  // New notification form
+  const [newNotification, setNewNotification] = useState({
+    title: "",
+    message: "",
+    targetUser: "all", // "all" or specific user ID
+    type: "info", // "info", "warning", "success", "error"
+  })
+
+  // New blacklist form
+  const [blockUserForm, setBlockUserForm] = useState({
+    userId: "",
+    reason: "",
+  })
+
+  // Reply to feedback form
+  const [replyForm, setReplyForm] = useState({
+    feedbackId: null,
+    message: "",
+  })
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [notificationsPage, setNotificationsPage] = useState(1)
+  const [blacklistPage, setBlacklistPage] = useState(1)
+  const itemsPerPage = 10
 
   const fetchComments = async () => {
     setLoading(true)
@@ -79,10 +139,227 @@ const Comments = ({ url }) => {
     }
   }
 
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        toast.error("Vui lòng đăng nhập lại để tiếp tục")
+        return
+      }
+
+      // This is a mock implementation - replace with your actual API endpoint
+      const response = await axios.get(`${url}/api/user/list`, {
+        headers: {
+          token: token,
+        },
+      })
+
+      if (response.data.success) {
+        setUsers(response.data.data)
+      } else {
+        console.error("API returned error:", response.data.message)
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error)
+      // If the API doesn't exist yet, use mock data
+      setUsers([
+        { _id: "1", name: "Nguyễn Văn A", email: "nguyenvana@example.com" },
+        { _id: "2", name: "Trần Thị B", email: "tranthib@example.com" },
+        { _id: "3", name: "Lê Văn C", email: "levanc@example.com" },
+        { _id: "4", name: "Phạm Thị D", email: "phamthid@example.com" },
+        { _id: "5", name: "Hoàng Văn E", email: "hoangvane@example.com" },
+      ])
+    }
+  }
+
+  const fetchNotificationsAndFeedback = async () => {
+    setNotificationsLoading(true)
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        toast.error("Vui lòng đăng nhập lại để tiếp tục")
+        setNotificationsLoading(false)
+        return
+      }
+
+      // This is a mock implementation - replace with your actual API endpoints
+      // For notifications
+      try {
+        const notificationsResponse = await axios.get(`${url}/api/notification/list`, {
+          headers: {
+            token: token,
+          },
+        })
+
+        if (notificationsResponse.data.success) {
+          setNotifications(notificationsResponse.data.data)
+        }
+      } catch (error) {
+        console.error("Error fetching notifications:", error)
+        // Mock data if API doesn't exist yet
+        setNotifications([
+          {
+            _id: "n1",
+            title: "Khuyến mãi mới",
+            message: "Giảm 20% cho tất cả các đơn hàng trong tuần này!",
+            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+            type: "info",
+            targetUser: "all",
+            read: false,
+          },
+          {
+            _id: "n2",
+            title: "Cập nhật hệ thống",
+            message: "Hệ thống sẽ bảo trì vào ngày 15/05/2023 từ 22:00 - 24:00",
+            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+            type: "warning",
+            targetUser: "all",
+            read: true,
+          },
+          {
+            _id: "n3",
+            title: "Món mới",
+            message: "Chúng tôi vừa thêm 5 món mới vào thực đơn. Hãy khám phá ngay!",
+            createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+            type: "success",
+            targetUser: "all",
+            read: true,
+          },
+        ])
+      }
+
+      // For feedback
+      try {
+        const feedbackResponse = await axios.get(`${url}/api/feedback/list`, {
+          headers: {
+            token: token,
+          },
+        })
+
+        if (feedbackResponse.data.success) {
+          setFeedback(feedbackResponse.data.data)
+        }
+      } catch (error) {
+        console.error("Error fetching feedback:", error)
+        // Mock data if API doesn't exist yet
+        setFeedback([
+          {
+            _id: "f1",
+            userId: "1",
+            userName: "Nguyễn Văn A",
+            message: "Tôi rất thích món gà rán của quán, nhưng giao hàng hơi chậm.",
+            createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+            status: "pending",
+            reply: null,
+          },
+          {
+            _id: "f2",
+            userId: "2",
+            userName: "Trần Thị B",
+            message: "Ứng dụng đặt hàng rất dễ sử dụng, tôi rất hài lòng!",
+            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            status: "replied",
+            reply: {
+              message: "Cảm ơn bạn đã đánh giá tích cực! Chúng tôi rất vui khi bạn hài lòng với dịch vụ.",
+              createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+          },
+          {
+            _id: "f3",
+            userId: "3",
+            userName: "Lê Văn C",
+            message: "Tôi muốn đề xuất thêm món salad vào thực đơn.",
+            createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+            status: "replied",
+            reply: {
+              message:
+                "Cảm ơn đề xuất của bạn! Chúng tôi sẽ xem xét bổ sung món salad vào thực đơn trong thời gian tới.",
+              createdAt: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+          },
+        ])
+      }
+    } catch (error) {
+      console.error("Error in fetchNotificationsAndFeedback:", error)
+    } finally {
+      setNotificationsLoading(false)
+    }
+  }
+
+  const fetchBlacklist = async () => {
+    setBlacklistLoading(true)
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        toast.error("Vui lòng đăng nhập lại để tiếp tục")
+        setBlacklistLoading(false)
+        return
+      }
+
+      // This is a mock implementation - replace with your actual API endpoint
+      try {
+        const response = await axios.get(`${url}/api/user/blacklist`, {
+          headers: {
+            token: token,
+          },
+        })
+
+        if (response.data.success) {
+          setBlacklist(response.data.data)
+        }
+      } catch (error) {
+        console.error("Error fetching blacklist:", error)
+        // Mock data if API doesn't exist yet
+        setBlacklist([
+          {
+            _id: "b1",
+            userId: "6",
+            userName: "Đỗ Văn F",
+            email: "dovanf@example.com",
+            reason: "Spam đánh giá giả mạo",
+            blockedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            blockedBy: "Admin",
+          },
+          {
+            _id: "b2",
+            userId: "7",
+            userName: "Vũ Thị G",
+            email: "vuthig@example.com",
+            reason: "Ngôn ngữ không phù hợp trong đánh giá",
+            blockedAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+            blockedBy: "Admin",
+          },
+          {
+            _id: "b3",
+            userId: "8",
+            userName: "Ngô Văn H",
+            email: "ngovanh@example.com",
+            reason: "Lạm dụng chính sách hoàn tiền",
+            blockedAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+            blockedBy: "Admin",
+          },
+        ])
+      }
+    } catch (error) {
+      console.error("Error in fetchBlacklist:", error)
+    } finally {
+      setBlacklistLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchComments()
     fetchFoodList()
+    fetchUsers()
   }, [])
+
+  useEffect(() => {
+    if (activeTab === "notifications") {
+      fetchNotificationsAndFeedback()
+    } else if (activeTab === "blacklist") {
+      fetchBlacklist()
+    }
+  }, [activeTab])
 
   const handleStatusChange = async (commentId, isApproved) => {
     try {
@@ -124,24 +401,217 @@ const Comments = ({ url }) => {
   const handleDeleteClick = (commentId) => {
     setConfirmModal({
       isOpen: true,
-      commentId: commentId,
+      type: "deleteComment",
+      id: commentId,
+      message: "Bạn có chắc chắn muốn xóa đánh giá này? Hành động này không thể hoàn tác.",
     })
   }
 
-  const handleConfirmDelete = async () => {
-    if (confirmModal.commentId) {
+  const handleSendNotification = () => {
+    if (!newNotification.title || !newNotification.message) {
+      toast.error("Vui lòng nhập tiêu đề và nội dung thông báo")
+      return
+    }
+
+    // This is a mock implementation - replace with your actual API call
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        toast.error("Vui lòng đăng nhập lại để tiếp tục")
+        return
+      }
+
+      // Simulate API call
+      setTimeout(() => {
+        // Add to local state for immediate feedback
+        const newNotificationObj = {
+          _id: `n${Date.now()}`,
+          ...newNotification,
+          createdAt: new Date().toISOString(),
+          read: false,
+        }
+
+        setNotifications([newNotificationObj, ...notifications])
+
+        // Reset form
+        setNewNotification({
+          title: "",
+          message: "",
+          targetUser: "all",
+          type: "info",
+        })
+
+        toast.success("Đã gửi thông báo thành công")
+      }, 500)
+    } catch (error) {
+      console.error("Error sending notification:", error)
+      toast.error("Lỗi khi gửi thông báo")
+    }
+  }
+
+  const handleReplyToFeedback = () => {
+    if (!replyForm.message || !replyForm.feedbackId) {
+      toast.error("Vui lòng nhập nội dung phản hồi")
+      return
+    }
+
+    // This is a mock implementation - replace with your actual API call
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        toast.error("Vui lòng đăng nhập lại để tiếp tục")
+        return
+      }
+
+      // Simulate API call
+      setTimeout(() => {
+        // Update local state for immediate feedback
+        const updatedFeedback = feedback.map((item) => {
+          if (item._id === replyForm.feedbackId) {
+            return {
+              ...item,
+              status: "replied",
+              reply: {
+                message: replyForm.message,
+                createdAt: new Date().toISOString(),
+              },
+            }
+          }
+          return item
+        })
+
+        setFeedback(updatedFeedback)
+
+        // Reset form
+        setReplyForm({
+          feedbackId: null,
+          message: "",
+        })
+
+        toast.success("Đã gửi phản hồi thành công")
+      }, 500)
+    } catch (error) {
+      console.error("Error replying to feedback:", error)
+      toast.error("Lỗi khi gửi phản hồi")
+    }
+  }
+
+  const handleBlockUser = () => {
+    if (!blockUserForm.userId || !blockUserForm.reason) {
+      toast.error("Vui lòng chọn người dùng và nhập lý do chặn")
+      return
+    }
+
+    // This is a mock implementation - replace with your actual API call
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        toast.error("Vui lòng đăng nhập lại để tiếp tục")
+        return
+      }
+
+      // Find user details
+      const user = users.find((u) => u._id === blockUserForm.userId)
+      if (!user) {
+        toast.error("Không tìm thấy thông tin người dùng")
+        return
+      }
+
+      // Simulate API call
+      setTimeout(() => {
+        // Add to local state for immediate feedback
+        const newBlockedUser = {
+          _id: `b${Date.now()}`,
+          userId: user._id,
+          userName: user.name,
+          email: user.email,
+          reason: blockUserForm.reason,
+          blockedAt: new Date().toISOString(),
+          blockedBy: "Admin",
+        }
+
+        setBlacklist([newBlockedUser, ...blacklist])
+
+        // Reset form
+        setBlockUserForm({
+          userId: "",
+          reason: "",
+        })
+
+        toast.success(`Đã chặn người dùng ${user.name} thành công`)
+      }, 500)
+    } catch (error) {
+      console.error("Error blocking user:", error)
+      toast.error("Lỗi khi chặn người dùng")
+    }
+  }
+
+  const handleUnblockUser = (userId) => {
+    setConfirmModal({
+      isOpen: true,
+      type: "unblockUser",
+      id: userId,
+      message: "Bạn có chắc chắn muốn bỏ chặn người dùng này?",
+    })
+  }
+
+  const handleMarkNotificationRead = (notificationId, isRead) => {
+    // This is a mock implementation - replace with your actual API call
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        toast.error("Vui lòng đăng nhập lại để tiếp tục")
+        return
+      }
+
+      // Simulate API call
+      setTimeout(() => {
+        // Update local state for immediate feedback
+        const updatedNotifications = notifications.map((item) => {
+          if (item._id === notificationId) {
+            return {
+              ...item,
+              read: isRead,
+            }
+          }
+          return item
+        })
+
+        setNotifications(updatedNotifications)
+
+        toast.success(isRead ? "Đã đánh dấu đã đọc" : "Đã đánh dấu chưa đọc")
+      }, 300)
+    } catch (error) {
+      console.error("Error updating notification status:", error)
+      toast.error("Lỗi khi cập nhật trạng thái thông báo")
+    }
+  }
+
+  const handleDeleteNotification = (notificationId) => {
+    setConfirmModal({
+      isOpen: true,
+      type: "deleteNotification",
+      id: notificationId,
+      message: "Bạn có chắc chắn muốn xóa thông báo này?",
+    })
+  }
+
+  const handleConfirmAction = async () => {
+    const { type, id } = confirmModal
+
+    if (type === "deleteComment") {
       try {
         const token = localStorage.getItem("token")
         if (!token) {
           toast.error("Vui lòng đăng nhập lại để tiếp tục")
-          setConfirmModal({ isOpen: false, commentId: null })
+          setConfirmModal({ isOpen: false, type: null, id: null, message: "" })
           return
         }
 
-        console.log("Deleting comment:", confirmModal.commentId)
+        console.log("Deleting comment:", id)
         const response = await axios.post(
           `${url}/api/comment/delete`,
-          { id: confirmModal.commentId },
+          { id },
           {
             headers: {
               token: token,
@@ -162,8 +632,37 @@ const Comments = ({ url }) => {
         console.error("Error deleting comment:", error)
         toast.error("Lỗi kết nối đến máy chủ")
       }
+    } else if (type === "deleteNotification") {
+      // This is a mock implementation - replace with your actual API call
+      try {
+        // Simulate API call
+        setTimeout(() => {
+          // Update local state
+          const updatedNotifications = notifications.filter((item) => item._id !== id)
+          setNotifications(updatedNotifications)
+          toast.success("Đã xóa thông báo thành công")
+        }, 300)
+      } catch (error) {
+        console.error("Error deleting notification:", error)
+        toast.error("Lỗi khi xóa thông báo")
+      }
+    } else if (type === "unblockUser") {
+      // This is a mock implementation - replace with your actual API call
+      try {
+        // Simulate API call
+        setTimeout(() => {
+          // Update local state
+          const updatedBlacklist = blacklist.filter((item) => item._id !== id)
+          setBlacklist(updatedBlacklist)
+          toast.success("Đã bỏ chặn người dùng thành công")
+        }, 300)
+      } catch (error) {
+        console.error("Error unblocking user:", error)
+        toast.error("Lỗi khi bỏ chặn người dùng")
+      }
     }
-    setConfirmModal({ isOpen: false, commentId: null })
+
+    setConfirmModal({ isOpen: false, type: null, id: null, message: "" })
   }
 
   const formatDate = (dateString) => {
@@ -175,6 +674,14 @@ const Comments = ({ url }) => {
       hour: "2-digit",
       minute: "2-digit",
     })
+  }
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+      maximumFractionDigits: 0,
+    }).format(value)
   }
 
   const getFoodName = (foodId) => {
@@ -211,206 +718,801 @@ const Comments = ({ url }) => {
     return true
   })
 
+  // Get current page items for comments
+  const getCurrentComments = () => {
+    const indexOfLastItem = currentPage * itemsPerPage
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage
+    return filteredComments.slice(indexOfFirstItem, indexOfLastItem)
+  }
+
+  // Get current page items for notifications
+  const getCurrentNotifications = () => {
+    const indexOfLastItem = notificationsPage * itemsPerPage
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage
+    return notifications.slice(indexOfFirstItem, indexOfLastItem)
+  }
+
+  // Get current page items for feedback
+  const getCurrentFeedback = () => {
+    const indexOfLastItem = notificationsPage * itemsPerPage
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage
+    return feedback.slice(indexOfFirstItem, indexOfLastItem)
+  }
+
+  // Get current page items for blacklist
+  const getCurrentBlacklist = () => {
+    const indexOfLastItem = blacklistPage * itemsPerPage
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage
+    return blacklist.slice(indexOfFirstItem, indexOfLastItem)
+  }
+
+  const totalCommentsPages = Math.ceil(filteredComments.length / itemsPerPage)
+  const totalNotificationsPages = Math.ceil(notifications.length / itemsPerPage)
+  const totalFeedbackPages = Math.ceil(feedback.length / itemsPerPage)
+  const totalBlacklistPages = Math.ceil(blacklist.length / itemsPerPage)
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber)
+  }
+
+  const handleNotificationsPageChange = (pageNumber) => {
+    setNotificationsPage(pageNumber)
+  }
+
+  const handleBlacklistPageChange = (pageNumber) => {
+    setBlacklistPage(pageNumber)
+  }
+
+  const currentComments = getCurrentComments()
+  const currentNotifications = getCurrentNotifications()
+  const currentFeedback = getCurrentFeedback()
+  const currentBlacklist = getCurrentBlacklist()
+
+  // Chart colors
+  const chartColors = [
+    "#FF6384",
+    "#36A2EB",
+    "#FFCE56",
+    "#4BC0C0",
+    "#9966FF",
+    "#FF9F40",
+    "#8AC926",
+    "#1982C4",
+    "#6A4C93",
+    "#F94144",
+  ]
+
+  // Get notification type style
+  const getNotificationTypeStyle = (type) => {
+    switch (type) {
+      case "info":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+      case "warning":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+      case "success":
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+      case "error":
+        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+    }
+  }
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="bg-white dark:bg-dark-light rounded-2xl shadow-custom p-6 mb-8">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center">
           <MessageSquare className="mr-2" size={24} />
-          Quản lý đánh giá sản phẩm
+          Quản lý người dùng
         </h1>
 
-        <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
-          {/* Search Bar */}
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Tìm kiếm theo tên người dùng, nội dung hoặc sản phẩm..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row items-center gap-2">
-            {/* Category Filter */}
-            <div className="relative w-full sm:w-auto">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Tag className="h-5 w-5 text-gray-400" />
-              </div>
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="all">Tất cả danh mục</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Status Filter */}
-            <div className="relative w-full sm:w-auto">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Filter className="h-5 w-5 text-gray-400" />
-              </div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="all">Tất cả trạng thái</option>
-                <option value="approved">Đã duyệt</option>
-                <option value="pending">Chưa duyệt</option>
-              </select>
-            </div>
-
-            {/* Refresh Button */}
-            <button
-              onClick={fetchComments}
-              className="p-3 bg-gray-100 dark:bg-dark-lighter rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-dark transition-colors"
-              title="Refresh"
-            >
-              <RefreshCw size={20} />
-            </button>
-          </div>
+        {/* Tab Navigation */}
+        <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
+          <button
+            className={`py-3 px-4 font-medium text-sm flex items-center whitespace-nowrap ${
+              activeTab === "comments"
+                ? "text-primary border-b-2 border-primary"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+            onClick={() => setActiveTab("comments")}
+          >
+            <MessageSquare className="mr-2" size={16} />
+            Đánh giá sản phẩm
+          </button>
+          <button
+            className={`py-3 px-4 font-medium text-sm flex items-center whitespace-nowrap ${
+              activeTab === "notifications"
+                ? "text-primary border-b-2 border-primary"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+            onClick={() => setActiveTab("notifications")}
+          >
+            <Bell className="mr-2" size={16} />
+            Thông báo & Phản hồi
+          </button>
+          <button
+            className={`py-3 px-4 font-medium text-sm flex items-center whitespace-nowrap ${
+              activeTab === "blacklist"
+                ? "text-primary border-b-2 border-primary"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+            onClick={() => setActiveTab("blacklist")}
+          >
+            <UserX className="mr-2" size={16} />
+            Danh sách đen
+          </button>
         </div>
 
-        {/* Filter Summary */}
-        {(categoryFilter !== "all" || statusFilter !== "all" || searchTerm) && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 p-4 rounded-lg mb-6">
-            <p className="font-medium">Bộ lọc hiện tại:</p>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {categoryFilter !== "all" && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
-                  Danh mục: {categoryFilter}
-                </span>
-              )}
-              {statusFilter !== "all" && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
-                  Trạng thái: {statusFilter === "approved" ? "Đã duyệt" : "Chưa duyệt"}
-                </span>
-              )}
-              {searchTerm && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
-                  Tìm kiếm: {searchTerm}
-                </span>
-              )}
+        {/* Comments Tab */}
+        {activeTab === "comments" && (
+          <>
+            <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+              {/* Search Bar */}
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm theo tên người dùng, nội dung hoặc sản phẩm..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                {/* Category Filter */}
+                <div className="relative w-full sm:w-auto">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Tag className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="all">Tất cả danh mục</option>
+                    {categories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Status Filter */}
+                <div className="relative w-full sm:w-auto">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Filter className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="all">Tất cả trạng thái</option>
+                    <option value="approved">Đã duyệt</option>
+                    <option value="pending">Chưa duyệt</option>
+                  </select>
+                </div>
+
+                {/* Refresh Button */}
+                <button
+                  onClick={fetchComments}
+                  className="p-3 bg-gray-100 dark:bg-dark-lighter rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-dark transition-colors"
+                  title="Refresh"
+                >
+                  <RefreshCw size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Summary */}
+            {(categoryFilter !== "all" || statusFilter !== "all" || searchTerm) && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 p-4 rounded-lg mb-6">
+                <p className="font-medium">Bộ lọc hiện tại:</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {categoryFilter !== "all" && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+                      Danh mục: {categoryFilter}
+                    </span>
+                  )}
+                  {statusFilter !== "all" && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+                      Trạng thái: {statusFilter === "approved" ? "Đã duyệt" : "Chưa duyệt"}
+                    </span>
+                  )}
+                  {searchTerm && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+                      Tìm kiếm: {searchTerm}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 p-4 rounded-lg mb-6">
+                <p className="font-medium">Lỗi:</p>
+                <p>{error}</p>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            ) : filteredComments.length > 0 ? (
+              <div className="space-y-4">
+                {currentComments.map((comment) => (
+                  <div
+                    key={comment._id}
+                    className={`bg-white dark:bg-dark rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow border ${
+                      comment.isApproved
+                        ? "border-green-200 dark:border-green-900"
+                        : "border-yellow-200 dark:border-yellow-900"
+                    } p-5`}
+                  >
+                    <div className="flex flex-col md:flex-row justify-between mb-4">
+                      <div className="flex items-center mb-4 md:mb-0">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
+                            comment.isApproved
+                              ? "bg-green-100 dark:bg-green-900/30 text-green-500"
+                              : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-500"
+                          }`}
+                        >
+                          {comment.isApproved ? <Check size={20} /> : <X size={20} />}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-800 dark:text-white">{comment.userName}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{formatDate(comment.createdAt)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {!comment.isApproved && (
+                          <button
+                            onClick={() => handleStatusChange(comment._id, true)}
+                            className="p-2 bg-green-100 text-green-500 rounded-full hover:bg-green-200 transition-colors"
+                            title="Duyệt đánh giá"
+                          >
+                            <Check size={18} />
+                          </button>
+                        )}
+                        {comment.isApproved && (
+                          <button
+                            onClick={() => handleStatusChange(comment._id, false)}
+                            className="p-2 bg-yellow-100 text-yellow-500 rounded-full hover:bg-yellow-200 transition-colors"
+                            title="Hủy duyệt"
+                          >
+                            <X size={18} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteClick(comment._id)}
+                          className="p-2 bg-red-100 text-red-500 rounded-full hover:bg-red-200 transition-colors"
+                          title="Xóa đánh giá"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 dark:bg-dark-lighter rounded-lg p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                        <div className="flex mr-2">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              size={16}
+                              className={i < comment.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Đánh giá cho: {getFoodName(comment.foodId)}
+                        </span>
+                        <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
+                          {getFoodCategory(comment.foodId)}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 dark:text-gray-300">{comment.comment}</p>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Pagination */}
+                <Pagination currentPage={currentPage} totalPages={totalCommentsPages} onPageChange={handlePageChange} />
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-gray-50 dark:bg-dark-lighter rounded-xl">
+                <MessageSquare size={64} className="mx-auto mb-4 text-gray-400" />
+                <h3 className="text-xl text-gray-500 dark:text-gray-400 mb-2">Không có đánh giá nào</h3>
+                <p className="text-gray-400 dark:text-gray-500">Chưa có đánh giá nào phù hợp với tìm kiếm của bạn</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Notifications & Feedback Tab */}
+        {activeTab === "notifications" && (
+          <div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Notifications Section */}
+              <div className="bg-white dark:bg-dark-lighter rounded-xl shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 flex items-center">
+                  <Bell className="mr-2" size={20} />
+                  Quản lý thông báo
+                </h2>
+
+                {/* New Notification Form */}
+                <div className="bg-gray-50 dark:bg-dark rounded-lg p-4 mb-6">
+                  <h3 className="text-md font-medium text-gray-800 dark:text-white mb-4">Tạo thông báo mới</h3>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label
+                        htmlFor="notification-title"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        Tiêu đề
+                      </label>
+                      <input
+                        id="notification-title"
+                        type="text"
+                        value={newNotification.title}
+                        onChange={(e) => setNewNotification({ ...newNotification, title: e.target.value })}
+                        placeholder="Nhập tiêu đề thông báo"
+                        className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="notification-message"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        Nội dung
+                      </label>
+                      <textarea
+                        id="notification-message"
+                        value={newNotification.message}
+                        onChange={(e) => setNewNotification({ ...newNotification, message: e.target.value })}
+                        placeholder="Nhập nội dung thông báo"
+                        rows={3}
+                        className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label
+                          htmlFor="notification-target"
+                          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                        >
+                          Đối tượng
+                        </label>
+                        <select
+                          id="notification-target"
+                          value={newNotification.targetUser}
+                          onChange={(e) => setNewNotification({ ...newNotification, targetUser: e.target.value })}
+                          className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="all">Tất cả người dùng</option>
+                          {users.map((user) => (
+                            <option key={user._id} value={user._id}>
+                              {user.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="notification-type"
+                          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                        >
+                          Loại thông báo
+                        </label>
+                        <select
+                          id="notification-type"
+                          value={newNotification.type}
+                          onChange={(e) => setNewNotification({ ...newNotification, type: e.target.value })}
+                          className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="info">Thông tin</option>
+                          <option value="warning">Cảnh báo</option>
+                          <option value="success">Thành công</option>
+                          <option value="error">Lỗi</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        onClick={handleSendNotification}
+                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center"
+                      >
+                        <Send size={16} className="mr-2" />
+                        Gửi thông báo
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notifications List */}
+                <h3 className="text-md font-medium text-gray-800 dark:text-white mb-4">Danh sách thông báo</h3>
+
+                {notificationsLoading ? (
+                  <div className="flex justify-center items-center h-40">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                  </div>
+                ) : currentNotifications.length > 0 ? (
+                  <div className="space-y-4">
+                    {currentNotifications.map((notification) => (
+                      <div
+                        key={notification._id}
+                        className={`border rounded-lg overflow-hidden ${notification.read ? "border-gray-200 dark:border-gray-700" : "border-primary dark:border-primary/70"}`}
+                      >
+                        <div
+                          className={`px-4 py-3 flex justify-between items-center ${getNotificationTypeStyle(notification.type)}`}
+                        >
+                          <div className="font-medium">{notification.title}</div>
+                          <div className="flex items-center space-x-1">
+                            {notification.read ? (
+                              <button
+                                onClick={() => handleMarkNotificationRead(notification._id, false)}
+                                className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                title="Đánh dấu chưa đọc"
+                              >
+                                <EyeOff size={16} />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleMarkNotificationRead(notification._id, true)}
+                                className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                title="Đánh dấu đã đọc"
+                              >
+                                <Eye size={16} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteNotification(notification._id)}
+                              className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                              title="Xóa thông báo"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="p-4 bg-white dark:bg-dark">
+                          <p className="text-gray-700 dark:text-gray-300 mb-3">{notification.message}</p>
+                          <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center">
+                              <Calendar size={14} className="mr-1" />
+                              {formatDate(notification.createdAt)}
+                            </div>
+                            <div>{notification.targetUser === "all" ? "Tất cả người dùng" : "Người dùng cụ thể"}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Pagination */}
+                    {totalNotificationsPages > 1 && (
+                      <Pagination
+                        currentPage={notificationsPage}
+                        totalPages={totalNotificationsPages}
+                        onPageChange={handleNotificationsPageChange}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 dark:bg-dark rounded-lg">
+                    <Bell size={40} className="mx-auto mb-3 text-gray-400" />
+                    <p className="text-gray-500 dark:text-gray-400">Chưa có thông báo nào</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Feedback Section */}
+              <div className="bg-white dark:bg-dark-lighter rounded-xl shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 flex items-center">
+                  <MessageCircle className="mr-2" size={20} />
+                  Phản hồi từ người dùng
+                </h2>
+
+                {notificationsLoading ? (
+                  <div className="flex justify-center items-center h-40">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                  </div>
+                ) : currentFeedback.length > 0 ? (
+                  <div className="space-y-6">
+                    {currentFeedback.map((item) => (
+                      <div
+                        key={item._id}
+                        className={`border rounded-lg overflow-hidden ${
+                          item.status === "pending"
+                            ? "border-yellow-200 dark:border-yellow-900"
+                            : "border-green-200 dark:border-green-900"
+                        }`}
+                      >
+                        <div
+                          className={`px-4 py-3 flex justify-between items-center ${
+                            item.status === "pending"
+                              ? "bg-yellow-50 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+                              : "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                          }`}
+                        >
+                          <div className="font-medium flex items-center">
+                            <User size={16} className="mr-2" />
+                            {item.userName}
+                          </div>
+                          <div className="text-xs">{item.status === "pending" ? "Chưa phản hồi" : "Đã phản hồi"}</div>
+                        </div>
+
+                        <div className="p-4 bg-white dark:bg-dark">
+                          <p className="text-gray-700 dark:text-gray-300 mb-3">{item.message}</p>
+                          <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-3">
+                            <div className="flex items-center">
+                              <Calendar size={14} className="mr-1" />
+                              {formatDate(item.createdAt)}
+                            </div>
+                          </div>
+
+                          {/* Reply section */}
+                          {item.reply ? (
+                            <div className="mt-4 bg-gray-50 dark:bg-dark-lighter rounded-lg p-3">
+                              <div className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <Reply size={14} className="mr-1" />
+                                Phản hồi của bạn:
+                              </div>
+                              <p className="text-gray-600 dark:text-gray-400 text-sm">{item.reply.message}</p>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center">
+                                <Clock size={12} className="mr-1" />
+                                {formatDate(item.reply.createdAt)}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-3">
+                              <textarea
+                                placeholder="Nhập phản hồi của bạn..."
+                                rows={2}
+                                value={replyForm.feedbackId === item._id ? replyForm.message : ""}
+                                onChange={(e) => setReplyForm({ feedbackId: item._id, message: e.target.value })}
+                                onClick={() => setReplyForm({ feedbackId: item._id, message: "" })}
+                                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                              />
+                              <div className="flex justify-end mt-2">
+                                <button
+                                  onClick={handleReplyToFeedback}
+                                  disabled={!replyForm.message || replyForm.feedbackId !== item._id}
+                                  className={`px-3 py-1 rounded-lg text-sm flex items-center ${
+                                    !replyForm.message || replyForm.feedbackId !== item._id
+                                      ? "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+                                      : "bg-primary text-white hover:bg-primary-dark"
+                                  }`}
+                                >
+                                  <Send size={14} className="mr-1" />
+                                  Gửi phản hồi
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Pagination */}
+                    {totalFeedbackPages > 1 && (
+                      <Pagination
+                        currentPage={notificationsPage}
+                        totalPages={totalFeedbackPages}
+                        onPageChange={handleNotificationsPageChange}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 dark:bg-dark rounded-lg">
+                    <MessageCircle size={40} className="mx-auto mb-3 text-gray-400" />
+                    <p className="text-gray-500 dark:text-gray-400">Chưa có phản hồi nào từ người dùng</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
 
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 p-4 rounded-lg mb-6">
-            <p className="font-medium">Lỗi:</p>
-            <p>{error}</p>
-          </div>
-        )}
+        {/* Blacklist Tab */}
+        {activeTab === "blacklist" && (
+          <div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Block User Form */}
+              <div className="lg:col-span-1">
+                <div className="bg-white dark:bg-dark-lighter rounded-xl shadow-sm p-6">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 flex items-center">
+                    <UserX className="mr-2" size={20} />
+                    Chặn người dùng
+                  </h2>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          </div>
-        ) : filteredComments.length > 0 ? (
-          <div className="space-y-4">
-            {filteredComments.map((comment) => (
-              <div
-                key={comment._id}
-                className={`bg-white dark:bg-dark rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow border ${
-                  comment.isApproved
-                    ? "border-green-200 dark:border-green-900"
-                    : "border-yellow-200 dark:border-yellow-900"
-                } p-5`}
-              >
-                <div className="flex flex-col md:flex-row justify-between mb-4">
-                  <div className="flex items-center mb-4 md:mb-0">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
-                        comment.isApproved
-                          ? "bg-green-100 dark:bg-green-900/30 text-green-500"
-                          : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-500"
-                      }`}
-                    >
-                      {comment.isApproved ? <Check size={20} /> : <X size={20} />}
-                    </div>
+                  <div className="space-y-4">
                     <div>
-                      <p className="font-medium text-gray-800 dark:text-white">{comment.userName}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{formatDate(comment.createdAt)}</p>
+                      <label
+                        htmlFor="block-user"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        Chọn người dùng
+                      </label>
+                      <select
+                        id="block-user"
+                        value={blockUserForm.userId}
+                        onChange={(e) => setBlockUserForm({ ...blockUserForm, userId: e.target.value })}
+                        className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">-- Chọn người dùng --</option>
+                        {users.map((user) => (
+                          <option key={user._id} value={user._id}>
+                            {user.name} ({user.email})
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {!comment.isApproved && (
-                      <button
-                        onClick={() => handleStatusChange(comment._id, true)}
-                        className="p-2 bg-green-100 text-green-500 rounded-full hover:bg-green-200 transition-colors"
-                        title="Duyệt đánh giá"
-                      >
-                        <Check size={18} />
-                      </button>
-                    )}
-                    {comment.isApproved && (
-                      <button
-                        onClick={() => handleStatusChange(comment._id, false)}
-                        className="p-2 bg-yellow-100 text-yellow-500 rounded-full hover:bg-yellow-200 transition-colors"
-                        title="Hủy duyệt"
-                      >
-                        <X size={18} />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleDeleteClick(comment._id)}
-                      className="p-2 bg-red-100 text-red-500 rounded-full hover:bg-red-200 transition-colors"
-                      title="Xóa đánh giá"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </div>
 
-                <div className="bg-gray-50 dark:bg-dark-lighter rounded-lg p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                    <div className="flex mr-2">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          size={16}
-                          className={i < comment.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
-                        />
-                      ))}
+                    <div>
+                      <label
+                        htmlFor="block-reason"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        Lý do chặn
+                      </label>
+                      <textarea
+                        id="block-reason"
+                        value={blockUserForm.reason}
+                        onChange={(e) => setBlockUserForm({ ...blockUserForm, reason: e.target.value })}
+                        placeholder="Nhập lý do chặn người dùng"
+                        rows={4}
+                        className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
                     </div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Đánh giá cho: {getFoodName(comment.foodId)}
-                    </span>
-                    <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
-                      {getFoodCategory(comment.foodId)}
-                    </span>
+
+                    <div className="pt-2">
+                      <button
+                        onClick={handleBlockUser}
+                        disabled={!blockUserForm.userId || !blockUserForm.reason}
+                        className={`w-full px-4 py-2 rounded-lg flex items-center justify-center ${
+                          !blockUserForm.userId || !blockUserForm.reason
+                            ? "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+                            : "bg-red-600 text-white hover:bg-red-700"
+                        }`}
+                      >
+                        <Shield size={16} className="mr-2" />
+                        Chặn người dùng
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-gray-700 dark:text-gray-300">{comment.comment}</p>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 bg-gray-50 dark:bg-dark-lighter rounded-xl">
-            <MessageSquare size={64} className="mx-auto mb-4 text-gray-400" />
-            <h3 className="text-xl text-gray-500 dark:text-gray-400 mb-2">Không có đánh giá nào</h3>
-            <p className="text-gray-400 dark:text-gray-500">Chưa có đánh giá nào phù hợp với tìm kiếm của bạn</p>
+
+              {/* Blacklist Table */}
+              <div className="lg:col-span-2">
+                <div className="bg-white dark:bg-dark-lighter rounded-xl shadow-sm p-6">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 flex items-center">
+                    <UserX className="mr-2" size={20} />
+                    Danh sách người dùng bị chặn
+                  </h2>
+
+                  {blacklistLoading ? (
+                    <div className="flex justify-center items-center h-40">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    </div>
+                  ) : currentBlacklist.length > 0 ? (
+                    <div>
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                          <thead className="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                              <th
+                                scope="col"
+                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                              >
+                                Người dùng
+                              </th>
+                              <th
+                                scope="col"
+                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                              >
+                                Lý do
+                              </th>
+                              <th
+                                scope="col"
+                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                              >
+                                Ngày chặn
+                              </th>
+                              <th
+                                scope="col"
+                                className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                              >
+                                Thao tác
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {currentBlacklist.map((user) => (
+                              <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex items-center">
+                                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                                      <span className="text-gray-700 dark:text-gray-200 font-medium">
+                                        {user.userName.charAt(0).toUpperCase()}
+                                      </span>
+                                    </div>
+                                    <div className="ml-4">
+                                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                        {user.userName}
+                                      </div>
+                                      <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="text-sm text-gray-900 dark:text-white">{user.reason}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                  {formatDate(user.blockedAt)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                  <button
+                                    onClick={() => handleUnblockUser(user._id)}
+                                    className="text-primary hover:text-primary-dark"
+                                  >
+                                    Bỏ chặn
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Pagination */}
+                      {totalBlacklistPages > 1 && (
+                        <div className="mt-4">
+                          <Pagination
+                            currentPage={blacklistPage}
+                            totalPages={totalBlacklistPages}
+                            onPageChange={handleBlacklistPageChange}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-gray-50 dark:bg-dark rounded-lg">
+                      <Shield size={40} className="mx-auto mb-3 text-gray-400" />
+                      <p className="text-gray-500 dark:text-gray-400">Không có người dùng nào bị chặn</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal({ isOpen: false, commentId: null })}
-        onConfirm={handleConfirmDelete}
-        title="Xác nhận xóa"
-        message="Bạn có chắc chắn muốn xóa đánh giá này? Hành động này không thể hoàn tác."
+        onClose={() => setConfirmModal({ isOpen: false, type: null, id: null, message: "" })}
+        onConfirm={handleConfirmAction}
+        title={
+          confirmModal.type === "deleteComment"
+            ? "Xác nhận xóa đánh giá"
+            : confirmModal.type === "deleteNotification"
+              ? "Xác nhận xóa thông báo"
+              : "Xác nhận bỏ chặn người dùng"
+        }
+        message={confirmModal.message}
       />
     </div>
   )

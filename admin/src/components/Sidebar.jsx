@@ -1,190 +1,175 @@
 "use client"
 
 import { useState } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
-import { useTheme } from "../context/ThemeContext"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
-  Sun,
-  Moon,
-  Settings,
+  Home,
+  Package,
+  ShoppingCart,
+  User,
+  LogOut,
   Menu,
   X,
-  Home,
-  PlusCircle,
-  List,
-  TrendingUp,
+  PieChart,
   Tag,
   MessageSquare,
-  ChevronRight,
-  ChevronLeft,
-  LogOut,
+  Moon,
+  Sun,
 } from "lucide-react"
+import { useTheme } from "../context/ThemeContext"
 
-const Sidebar = () => {
-  const navigate = useNavigate()
+const Sidebar = ({ onLogout }) => {
+  const [isOpen, setIsOpen] = useState(false)
   const location = useLocation()
-  const { darkMode, toggleDarkMode } = useTheme()
-  const [collapsed, setCollapsed] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const navigate = useNavigate()
+  const { theme, toggleTheme } = useTheme()
 
-  const navItems = [
-    { path: "/", label: "Quản lý đơn hàng", icon: <Home size={20} /> },
-    { path: "/add", label: "Thêm sản phẩm", icon: <PlusCircle size={20} /> },
-    { path: "/list", label: "Fast Food", icon: <List size={20} /> },
-    { path: "/revenue", label: "Doanh thu", icon: <TrendingUp size={20} /> },
-    { path: "/vouchers", label: "Quản lý voucher", icon: <Tag size={20} /> },
-    { path: "/comments", label: "Đánh giá sản phẩm", icon: <MessageSquare size={20} /> },
-    { path: "/profile", label: "Cài đặt", icon: <Settings size={20} /> },
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen)
+  }
+
+  const closeSidebar = () => {
+    setIsOpen(false)
+  }
+
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout()
+    }
+    navigate("/login")
+  }
+
+  const isActive = (path) => {
+    return location.pathname === path
+  }
+
+  const menuItems = [
+    {
+      path: "/",
+      name: "Đơn hàng",
+      icon: <ShoppingCart size={20} />,
+    },
+    {
+      path: "/list",
+      name: "Sản phẩm",
+      icon: <Package size={20} />,
+    },
+    {
+      path: "/add",
+      name: "Thêm sản phẩm",
+      icon: <Home size={20} />,
+    },
+    {
+      path: "/revenue",
+      name: "Doanh thu",
+      icon: <PieChart size={20} />,
+    },
+    {
+      path: "/vouchers",
+      name: "Mã giảm giá",
+      icon: <Tag size={20} />,
+    },
+    {
+      path: "/comments",
+      name: "Đánh giá",
+      icon: <MessageSquare size={20} />,
+    },
+    {
+      path: "/profile",
+      name: "Hồ sơ",
+      icon: <User size={20} />,
+    },
   ]
 
   return (
     <>
-      {/* Mobile Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-dark-light shadow-md py-3 md:hidden">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
-              <div className="bg-primary p-2 rounded-lg mr-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-dark"
-                >
-                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                </svg>
-              </div>
-              <span className="text-xl font-bold text-dark dark:text-white">Admin Panel</span>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-lighter rounded-full transition-colors"
-                aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-              >
-                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-lighter rounded-full transition-colors"
-              >
-                {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <div className="mt-4 bg-white dark:bg-dark-light rounded-xl shadow-custom p-4">
-              <nav className="flex flex-col space-y-2">
-                {navItems.map((item) => (
-                  <button
-                    key={item.path}
-                    onClick={() => {
-                      navigate(item.path)
-                      setMobileMenuOpen(false)
-                    }}
-                    className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
-                      location.pathname === item.path
-                        ? "bg-primary text-dark"
-                        : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-lighter"
-                    }`}
-                  >
-                    <span className="mr-3">{item.icon}</span>
-                    {item.label}
-                  </button>
-                ))}
-              </nav>
-            </div>
-          )}
+      {/* Mobile menu button */}
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-white dark:bg-dark shadow-md md:hidden">
+        <button
+          onClick={toggleSidebar}
+          className="p-2 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
+        >
+          <Menu size={24} />
+        </button>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
+          >
+            {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-md text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none"
+          >
+            <LogOut size={20} />
+          </button>
         </div>
-      </header>
+      </div>
 
-      {/* Desktop Sidebar */}
+      {/* Sidebar for mobile */}
+      <div
+        className={`fixed inset-0 z-50 md:hidden ${
+          isOpen ? "block" : "hidden"
+        } bg-gray-900 bg-opacity-50 transition-opacity duration-300`}
+        onClick={closeSidebar}
+      ></div>
+
       <aside
-        className={`fixed top-0 left-0 h-full bg-white dark:bg-dark-light shadow-lg z-50 transition-all duration-300 hidden md:flex flex-col ${
-          collapsed ? "w-20" : "w-64"
+        className={`fixed top-0 left-0 z-50 h-full w-64 bg-white dark:bg-dark-light shadow-xl transform transition-transform duration-300 ease-in-out md:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-lighter">
-          <div className={`flex items-center ${collapsed ? "justify-center w-full" : ""}`}>
-            <div className="bg-primary p-2 rounded-lg">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-dark"
-              >
-                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-              </svg>
-            </div>
-            {!collapsed && <span className="text-xl font-bold text-dark dark:text-white ml-2">Admin Panel</span>}
-          </div>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <Link to="/" className="flex items-center space-x-2" onClick={closeSidebar}>
+            <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
+            <span className="text-xl font-bold text-primary">Admin</span>
+          </Link>
           <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+            onClick={closeSidebar}
+            className="p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden focus:outline-none"
           >
-            {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+            <X size={20} />
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4">
-          <ul className="space-y-2 px-3">
-            {navItems.map((item) => (
+        <nav className="mt-6 px-4">
+          <ul className="space-y-2">
+            {menuItems.map((item) => (
               <li key={item.path}>
-                <button
-                  onClick={() => navigate(item.path)}
-                  className={`flex items-center w-full px-4 py-3 rounded-lg font-medium transition-colors ${
-                    location.pathname === item.path
-                      ? "bg-primary text-dark"
-                      : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-lighter"
-                  } ${collapsed ? "justify-center" : ""}`}
+                <Link
+                  to={item.path}
+                  className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                    isActive(item.path)
+                      ? "bg-primary text-white"
+                      : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  }`}
+                  onClick={closeSidebar}
                 >
-                  <span>{item.icon}</span>
-                  {!collapsed && <span className="ml-3">{item.label}</span>}
-                </button>
+                  {item.icon}
+                  <span className="ml-3">{item.name}</span>
+                </Link>
               </li>
             ))}
           </ul>
         </nav>
 
-        <div className="p-4 border-t border-gray-200 dark:border-dark-lighter">
+        <div className="absolute bottom-0 w-full p-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <button
-              onClick={toggleDarkMode}
-              className={`p-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-lighter rounded-full transition-colors ${
-                collapsed ? "mx-auto" : ""
-              }`}
-              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              onClick={toggleTheme}
+              className="flex items-center px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+              <span className="ml-3">{theme === "dark" ? "Sáng" : "Tối"}</span>
             </button>
-            {!collapsed && (
-              <button
-                onClick={() => {
-                  // Implement logout functionality
-                  navigate("/login")
-                }}
-                className="p-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-lighter rounded-full transition-colors"
-                aria-label="Logout"
-              >
-                <LogOut size={20} />
-              </button>
-            )}
+            <button
+              onClick={handleLogout}
+              className="flex items-center px-4 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            >
+              <LogOut size={20} />
+              <span className="ml-3">Đăng xuất</span>
+            </button>
           </div>
         </div>
       </aside>

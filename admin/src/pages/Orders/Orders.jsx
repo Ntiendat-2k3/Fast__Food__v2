@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 import axios from "axios"
-import ReactPaginate from "react-paginate"
 import {
   Package,
   Clock,
@@ -16,11 +15,9 @@ import {
   CreditCard,
   Wallet,
   Landmark,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react"
 import ConfirmModal from "../../components/ConfirmModal"
-import "../List/pagination.css"
+import Pagination from "../../components/Pagination"
 
 const Orders = ({ url }) => {
   const [orders, setOrders] = useState([])
@@ -37,16 +34,8 @@ const Orders = ({ url }) => {
   })
 
   // Pagination states
-  const [currentPage, setCurrentPage] = useState(0)
-  const itemsPerPage = 20
-  const pageCount = Math.ceil(filteredOrders.length / itemsPerPage)
-  const offset = currentPage * itemsPerPage
-  const currentItems = filteredOrders.slice(offset, offset + itemsPerPage)
-
-  // Handle page change
-  const handlePageChange = ({ selected }) => {
-    setCurrentPage(selected)
-  }
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   // Fetch all orders from API
   const fetchAllOrders = async () => {
@@ -134,8 +123,21 @@ const Orders = ({ url }) => {
     }
 
     setFilteredOrders(filtered)
-    setCurrentPage(0) // Reset to first page when filters change
+    setCurrentPage(1) // Reset to first page when filters change
   }, [searchTerm, statusFilter, orders])
+
+  // Get current page items
+  const getCurrentItems = () => {
+    const indexOfLastItem = currentPage * itemsPerPage
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage
+    return filteredOrders.slice(indexOfFirstItem, indexOfLastItem)
+  }
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage)
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber)
+  }
 
   // Get status icon based on status
   const getStatusIcon = (status) => {
@@ -218,6 +220,8 @@ const Orders = ({ url }) => {
       minute: "2-digit",
     })
   }
+
+  const currentItems = getCurrentItems()
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -385,30 +389,7 @@ const Orders = ({ url }) => {
             ))}
 
             {/* Pagination */}
-            {pageCount > 1 && (
-              <div className="flex justify-center mt-6">
-                <ReactPaginate
-                  previousLabel={<ChevronLeft size={16} />}
-                  nextLabel={<ChevronRight size={16} />}
-                  breakLabel={"..."}
-                  pageCount={pageCount}
-                  marginPagesDisplayed={2}
-                  pageRangeDisplayed={3}
-                  onPageChange={handlePageChange}
-                  containerClassName={"pagination"}
-                  pageClassName={"pagination-item"}
-                  pageLinkClassName={"pagination-link"}
-                  previousClassName={"pagination-item"}
-                  previousLinkClassName={"pagination-link"}
-                  nextClassName={"pagination-item"}
-                  nextLinkClassName={"pagination-link"}
-                  breakClassName={"pagination-item"}
-                  breakLinkClassName={"pagination-link"}
-                  activeClassName={"active"}
-                  forcePage={currentPage}
-                />
-              </div>
-            )}
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
           </div>
         ) : (
           <div className="text-center py-12 bg-gray-50 dark:bg-dark-lighter rounded-xl">

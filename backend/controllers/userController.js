@@ -46,6 +46,45 @@ const loginUser = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
+    }
+
+    res.json({ success: true, token, user: userData })
+  } catch (error) {
+    console.log(error)
+    res.json({ success: false, message: "Error" })
+  }
+}
+
+// Admin login
+const adminLogin = async (req, res) => {
+  const { email, password } = req.body
+  try {
+    const user = await userModel.findOne({ email })
+
+    if (!user) {
+      return res.json({ success: false, message: "User doesn't exist." })
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password)
+
+    if (!isMatch) {
+      return res.json({ success: false, message: "Invalid credentials" })
+    }
+
+    // Check if user has admin role
+    if (user.role !== "admin") {
+      return res.json({ success: false, message: "Access denied. Admin privileges required." })
+    }
+
+    const token = createToken(user._id)
+
+    // Return user data (excluding password) along with the token
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
     }
 
     res.json({ success: true, token, user: userData })
@@ -61,7 +100,7 @@ const createToken = (id) => {
 
 // register user
 const registerUser = async (req, res) => {
-  const { name, password, email } = req.body
+  const { name, password, email, role } = req.body
   try {
     //checking if user already exists
     const exists = await userModel.findOne({ email })
@@ -86,6 +125,7 @@ const registerUser = async (req, res) => {
       name: name,
       email: email,
       password: hashedPassword,
+      role: role || "user", // Default to 'user' if not specified
     })
 
     const user = await newUser.save()
@@ -96,6 +136,7 @@ const registerUser = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
     }
 
     res.json({ success: true, token, user: userData })
@@ -105,4 +146,4 @@ const registerUser = async (req, res) => {
   }
 }
 
-export { loginUser, registerUser, getUserProfile }
+export { loginUser, registerUser, getUserProfile, adminLogin }

@@ -17,12 +17,12 @@ router.post("/add", auth, addComment)
 router.get("/food/:foodId", getCommentsByFood)
 
 // Get all comments (admin only, requires authentication)
-router.get("/all", getAllComments)
+router.get("/all", auth, getAllComments)
 
 // Update comment status (admin only, requires authentication)
-router.post("/status", updateCommentStatus)
+router.post("/status", auth, updateCommentStatus)
 
 // Delete a comment (admin only, requires authentication)
-router.post("/delete", deleteComment)
+router.post("/delete", auth, deleteComment)
 
 export default router
