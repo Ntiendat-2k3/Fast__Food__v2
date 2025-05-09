@@ -3,28 +3,53 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { toast } from "react-toastify"
-import { MessageSquare, Star, Check, X, Trash2, Search, Filter, RefreshCw } from "lucide-react"
+import { MessageSquare, Star, Check, X, Trash2, Search, Filter, RefreshCw, Tag } from "lucide-react"
 import ConfirmModal from "../../components/ConfirmModal"
 
 const Comments = ({ url }) => {
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [categoryFilter, setCategoryFilter] = useState("all")
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, commentId: null })
   const [foodList, setFoodList] = useState([])
+  const [categories, setCategories] = useState([])
 
   const fetchComments = async () => {
     setLoading(true)
+    setError(null)
     try {
-      const response = await axios.get(`${url}/api/comment/all`)
+      console.log("Fetching comments from:", `${url}/api/comment/all`)
+      const token = localStorage.getItem("token")
+
+      if (!token) {
+        console.log("No token found in localStorage")
+        setError("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.")
+        toast.error("Vui lòng đăng nhập lại để tiếp tục")
+        setLoading(false)
+        return
+      }
+
+      const response = await axios.get(`${url}/api/comment/all`, {
+        headers: {
+          token: token,
+        },
+      })
+
+      console.log("Comments API response:", response.data)
+
       if (response.data.success) {
         setComments(response.data.data)
       } else {
-        toast.error("Lỗi khi tải danh sách đánh giá")
+        console.error("API returned error:", response.data.message)
+        setError(response.data.message || "Lỗi khi tải danh sách đánh giá")
+        toast.error(response.data.message || "Lỗi khi tải danh sách đánh giá")
       }
     } catch (error) {
       console.error("Error fetching comments:", error)
+      setError("Lỗi kết nối đến máy chủ: " + (error.message || "Unknown error"))
       toast.error("Lỗi kết nối đến máy chủ")
     } finally {
       setLoading(false)
@@ -33,12 +58,24 @@ const Comments = ({ url }) => {
 
   const fetchFoodList = async () => {
     try {
+      console.log("Fetching food list from:", `${url}/api/food/list`)
       const response = await axios.get(`${url}/api/food/list`)
+      console.log("Food list API response:", response.data)
+
       if (response.data.success) {
         setFoodList(response.data.data)
+
+        // Extract unique categories from food list
+        const uniqueCategories = [...new Set(response.data.data.map((food) => food.category))]
+        setCategories(uniqueCategories.sort())
+        console.log("Extracted categories:", uniqueCategories)
+      } else {
+        console.error("API returned error:", response.data.message)
+        toast.error("Lỗi khi tải danh sách sản phẩm")
       }
     } catch (error) {
       console.error("Error fetching food list:", error)
+      toast.error("Lỗi kết nối đến máy chủ khi tải danh sách sản phẩm")
     }
   }
 
@@ -49,14 +86,33 @@ const Comments = ({ url }) => {
 
   const handleStatusChange = async (commentId, isApproved) => {
     try {
-      const response = await axios.post(`${url}/api/comment/status`, {
-        id: commentId,
-        isApproved,
-      })
+      const token = localStorage.getItem("token")
+      if (!token) {
+        toast.error("Vui lòng đăng nhập lại để tiếp tục")
+        return
+      }
+
+      console.log("Updating comment status:", { id: commentId, isApproved })
+      const response = await axios.post(
+        `${url}/api/comment/status`,
+        {
+          id: commentId,
+          isApproved,
+        },
+        {
+          headers: {
+            token: token,
+          },
+        },
+      )
+
+      console.log("Status update response:", response.data)
+
       if (response.data.success) {
         toast.success("Cập nhật trạng thái đánh giá thành công")
         fetchComments()
       } else {
+        console.error("API returned error:", response.data.message)
         toast.error(response.data.message || "Lỗi khi cập nhật trạng thái đánh giá")
       }
     } catch (error) {
@@ -75,11 +131,31 @@ const Comments = ({ url }) => {
   const handleConfirmDelete = async () => {
     if (confirmModal.commentId) {
       try {
-        const response = await axios.post(`${url}/api/comment/delete`, { id: confirmModal.commentId })
+        const token = localStorage.getItem("token")
+        if (!token) {
+          toast.error("Vui lòng đăng nhập lại để tiếp tục")
+          setConfirmModal({ isOpen: false, commentId: null })
+          return
+        }
+
+        console.log("Deleting comment:", confirmModal.commentId)
+        const response = await axios.post(
+          `${url}/api/comment/delete`,
+          { id: confirmModal.commentId },
+          {
+            headers: {
+              token: token,
+            },
+          },
+        )
+
+        console.log("Delete response:", response.data)
+
         if (response.data.success) {
           toast.success("Xóa đánh giá thành công")
           fetchComments()
         } else {
+          console.error("API returned error:", response.data.message)
           toast.error(response.data.message || "Lỗi khi xóa đánh giá")
         }
       } catch (error) {
@@ -106,10 +182,21 @@ const Comments = ({ url }) => {
     return food ? food.name : "Sản phẩm không tồn tại"
   }
 
+  const getFoodCategory = (foodId) => {
+    const food = foodList.find((food) => food._id === foodId)
+    return food ? food.category : ""
+  }
+
   const filteredComments = comments.filter((comment) => {
     // Filter by status
     if (statusFilter === "approved" && !comment.isApproved) return false
     if (statusFilter === "pending" && comment.isApproved) return false
+
+    // Filter by category
+    if (categoryFilter !== "all") {
+      const foodCategory = getFoodCategory(comment.foodId)
+      if (foodCategory !== categoryFilter) return false
+    }
 
     // Filter by search term
     if (searchTerm) {
@@ -147,9 +234,29 @@ const Comments = ({ url }) => {
             />
           </div>
 
-          {/* Status Filter */}
-          <div className="flex items-center">
-            <div className="relative">
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row items-center gap-2">
+            {/* Category Filter */}
+            <div className="relative w-full sm:w-auto">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Tag className="h-5 w-5 text-gray-400" />
+              </div>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="all">Tất cả danh mục</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Status Filter */}
+            <div className="relative w-full sm:w-auto">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Filter className="h-5 w-5 text-gray-400" />
               </div>
@@ -158,20 +265,53 @@ const Comments = ({ url }) => {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value="all">Tất cả đánh giá</option>
+                <option value="all">Tất cả trạng thái</option>
                 <option value="approved">Đã duyệt</option>
                 <option value="pending">Chưa duyệt</option>
               </select>
             </div>
+
+            {/* Refresh Button */}
             <button
               onClick={fetchComments}
-              className="ml-2 p-3 bg-gray-100 dark:bg-dark-lighter rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-dark transition-colors"
+              className="p-3 bg-gray-100 dark:bg-dark-lighter rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-dark transition-colors"
               title="Refresh"
             >
               <RefreshCw size={20} />
             </button>
           </div>
         </div>
+
+        {/* Filter Summary */}
+        {(categoryFilter !== "all" || statusFilter !== "all" || searchTerm) && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 p-4 rounded-lg mb-6">
+            <p className="font-medium">Bộ lọc hiện tại:</p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {categoryFilter !== "all" && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+                  Danh mục: {categoryFilter}
+                </span>
+              )}
+              {statusFilter !== "all" && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+                  Trạng thái: {statusFilter === "approved" ? "Đã duyệt" : "Chưa duyệt"}
+                </span>
+              )}
+              {searchTerm && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+                  Tìm kiếm: {searchTerm}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 p-4 rounded-lg mb-6">
+            <p className="font-medium">Lỗi:</p>
+            <p>{error}</p>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
@@ -234,7 +374,7 @@ const Comments = ({ url }) => {
                 </div>
 
                 <div className="bg-gray-50 dark:bg-dark-lighter rounded-lg p-4">
-                  <div className="flex items-center mb-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                     <div className="flex mr-2">
                       {[...Array(5)].map((_, i) => (
                         <Star
@@ -246,6 +386,9 @@ const Comments = ({ url }) => {
                     </div>
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Đánh giá cho: {getFoodName(comment.foodId)}
+                    </span>
+                    <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
+                      {getFoodCategory(comment.foodId)}
                     </span>
                   </div>
                   <p className="text-gray-700 dark:text-gray-300">{comment.comment}</p>

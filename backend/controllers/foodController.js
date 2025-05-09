@@ -1,18 +1,12 @@
 import foodModel from "../models/foodModel.js"
 import fs from "fs"
-
-// // Hàm định dạng số với dấu chấm
-// const formatPrice = (price) => {
-//   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-// };
+import mongoose from "mongoose"
 
 const addFood = async (req, res) => {
   const image_filename = `${req.file.filename}`
 
-  // // Định dạng giá trước khi lưu
-  // const formattedPrice = formatPrice(req.body.price);
-
   const food = new foodModel({
+    _id: new mongoose.Types.ObjectId(),
     name: req.body.name,
     description: req.body.description,
     price: req.body.price,

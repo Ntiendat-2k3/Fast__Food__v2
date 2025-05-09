@@ -6,14 +6,23 @@ import {
   updateCommentStatus,
   deleteComment,
 } from "../controllers/commentController.js"
-import authMiddleware from "../middleware/auth.js"
+import auth from "../middleware/auth.js"
 
-const commentRouter = express.Router()
+const router = express.Router()
 
-commentRouter.post("/add", authMiddleware, addComment)
-commentRouter.get("/food/:foodId", getCommentsByFood)
-commentRouter.get("/all", getAllComments)
-commentRouter.post("/status", updateCommentStatus)
-commentRouter.post("/delete", deleteComment)
+// Add a new comment (requires authentication)
+router.post("/add", auth, addComment)
 
-export default commentRouter
+// Get comments by food ID (public)
+router.get("/food/:foodId", getCommentsByFood)
+
+// Get all comments (admin only, requires authentication)
+router.get("/all", getAllComments)
+
+// Update comment status (admin only, requires authentication)
+router.post("/status", updateCommentStatus)
+
+// Delete a comment (admin only, requires authentication)
+router.post("/delete", deleteComment)
+
+export default router

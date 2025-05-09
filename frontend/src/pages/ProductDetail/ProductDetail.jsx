@@ -5,6 +5,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { StoreContext } from "../../context/StoreContext"
 import { ToastContainer, toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
+import axios from "axios"
 import { compareNameWithSlug } from "../../utils/slugify"
 import {
   ShoppingCart,
@@ -24,10 +25,11 @@ import {
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { slugify } from "../../utils/slugify"
+import ReviewForm from "../../components/ReviewForm"
 
 const ProductDetail = () => {
   const { slug } = useParams()
-  const { cartItems, addToCart, url } = useContext(StoreContext)
+  const { cartItems, addToCart, url, user } = useContext(StoreContext)
   const { food_list } = useContext(StoreContext)
   const navigate = useNavigate()
 
@@ -36,6 +38,9 @@ const ProductDetail = () => {
   const [activeImage, setActiveImage] = useState(0)
   const [relatedProducts, setRelatedProducts] = useState([])
   const [isInWishlist, setIsInWishlist] = useState(false)
+  const [showReviewForm, setShowReviewForm] = useState(false)
+  const [reviews, setReviews] = useState([])
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false)
 
   // Tìm sản phẩm dựa trên slug (từ tên sản phẩm)
   const foodItem = food_list.find((item) => compareNameWithSlug(item.name, slug))
@@ -43,14 +48,40 @@ const ProductDetail = () => {
   useEffect(() => {
     window.scrollTo(0, 0)
 
-    // Nếu tìm thấy sản phẩm, tìm các sản phẩm liên quan
+    // Nếu tìm thấy sản phẩm, tìm các sản phẩm liên quan và lấy đánh giá
     if (foodItem) {
       const related = food_list
         .filter((item) => item.category === foodItem.category && item.name !== foodItem.name)
         .slice(0, 4)
       setRelatedProducts(related)
+
+      // Fetch reviews for this product
+      if (foodItem._id) {
+        fetchReviews(foodItem._id)
+      } else {
+        console.error("Food item does not have an _id:", foodItem)
+      }
     }
   }, [foodItem, food_list, slug])
+
+  const fetchReviews = async (foodId) => {
+    if (!foodId) {
+      console.error("Cannot fetch reviews: foodId is undefined")
+      return
+    }
+
+    try {
+      setIsLoadingReviews(true)
+      const response = await axios.get(`${url}/api/comment/food/${foodId}`)
+      if (response.data.success) {
+        setReviews(response.data.data)
+      }
+    } catch (error) {
+      console.error("Error fetching reviews:", error)
+    } finally {
+      setIsLoadingReviews(false)
+    }
+  }
 
   const handleAddToCart = () => {
     if (foodItem) {
@@ -68,8 +99,6 @@ const ProductDetail = () => {
 
   const handleBuyNow = () => {
     if (foodItem) {
-      // Clear the cart first
-      //setCartItems({}) //Cannot read properties of undefined (reading 'setCartItems')
       // Then add only this product
       addToCart(foodItem.name, quantity)
       navigate("/order")
@@ -92,6 +121,33 @@ const ProductDetail = () => {
       autoClose: 2000,
     })
   }
+
+  const handleReviewSubmitted = (newReview) => {
+    setReviews([newReview, ...reviews])
+    setShowReviewForm(false)
+    setActiveTab("reviews")
+  }
+
+  const handleWriteReview = () => {
+    // Check if user is logged in using token instead of user object
+    if (!localStorage.getItem("token")) {
+      toast.info("Vui lòng đăng nhập để viết đánh giá")
+      return
+    }
+
+    if (!foodItem || !foodItem._id) {
+      toast.error("Không thể xác định sản phẩm để đánh giá")
+      return
+    }
+
+    setShowReviewForm(true)
+    setActiveTab("reviews")
+  }
+
+  // Calculate average rating
+  const averageRating = reviews.length
+    ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
+    : 0
 
   // Nếu không tìm thấy sản phẩm
   if (!foodItem) {
@@ -137,34 +193,6 @@ const ProductDetail = () => {
       sodium: "380mg",
     },
   }
-
-  // Đánh giá sản phẩm (giả lập)
-  const reviews = [
-    {
-      id: 1,
-      name: "Nguyễn Văn A",
-      rating: 5,
-      date: "15/04/2023",
-      comment: "Món ăn rất ngon, đóng gói cẩn thận và giao hàng nhanh chóng. Tôi sẽ đặt lại lần sau.",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-    },
-    {
-      id: 2,
-      name: "Trần Thị B",
-      rating: 4,
-      date: "02/04/2023",
-      comment: "Hương vị tuyệt vời, nhưng giao hàng hơi chậm một chút.",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    },
-    {
-      id: 3,
-      name: "Lê Văn C",
-      rating: 5,
-      date: "28/03/2023",
-      comment: "Chất lượng sản phẩm rất tốt, đúng như mô tả. Sẽ ủng hộ lần sau.",
-      avatar: "https://randomuser.me/api/portraits/men/67.jpg",
-    },
-  ]
 
   return (
     <div className="pt-20 pb-16">
@@ -242,11 +270,15 @@ const ProductDetail = () => {
                     <Star
                       key={i}
                       size={18}
-                      className={i < 4.5 ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"}
+                      className={
+                        i < averageRating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"
+                      }
                     />
                   ))}
                 </div>
-                <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">(28 đánh giá)</span>
+                <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">
+                  {reviews.length > 0 ? `${averageRating} (${reviews.length} đánh giá)` : "Chưa có đánh giá"}
+                </span>
                 <span className="mx-2 text-gray-400">|</span>
                 <span className="text-sm text-green-600 dark:text-green-400 flex items-center">
                   <Check size={16} className="mr-1" /> Đã bán 120+
@@ -372,7 +404,7 @@ const ProductDetail = () => {
                     : "text-gray-600 dark:text-gray-300"
                 }`}
               >
-                Đánh giá (3)
+                Đánh giá ({reviews.length})
               </button>
             </div>
 
@@ -475,46 +507,73 @@ const ProductDetail = () => {
 
               {activeTab === "reviews" && (
                 <div>
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-medium text-dark dark:text-white">Đánh giá từ khách hàng</h3>
-                    <button className="bg-primary hover:bg-primary-light text-dark py-2 px-4 rounded-lg text-sm transition-colors">
-                      Viết đánh giá
-                    </button>
-                  </div>
+                  {showReviewForm ? (
+                    <ReviewForm
+                      foodId={foodItem._id}
+                      onReviewSubmitted={handleReviewSubmitted}
+                      onCancel={() => setShowReviewForm(false)}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-lg font-medium text-dark dark:text-white">Đánh giá từ khách hàng</h3>
+                      <button
+                        onClick={handleWriteReview}
+                        className="bg-primary hover:bg-primary-light text-dark py-2 px-4 rounded-lg text-sm transition-colors"
+                      >
+                        Viết đánh giá
+                      </button>
+                    </div>
+                  )}
 
-                  <div className="space-y-6">
-                    {reviews.map((review) => (
-                      <div key={review.id} className="border-b border-gray-200 dark:border-dark-lighter pb-6">
-                        <div className="flex items-start">
-                          <img
-                            src={review.avatar || "/placeholder.svg"}
-                            alt={review.name}
-                            className="w-10 h-10 rounded-full mr-4"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-1">
-                              <h4 className="font-medium text-dark dark:text-white">{review.name}</h4>
-                              <span className="text-sm text-gray-500 dark:text-gray-400">{review.date}</span>
+                  {isLoadingReviews ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                    </div>
+                  ) : reviews.length > 0 ? (
+                    <div className="space-y-6">
+                      {reviews.map((review) => (
+                        <div key={review._id} className="border-b border-gray-200 dark:border-dark-lighter pb-6">
+                          <div className="flex items-start">
+                            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300 font-medium mr-4">
+                              {review.userName ? review.userName.charAt(0).toUpperCase() : "U"}
                             </div>
-                            <div className="flex mb-2">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  size={16}
-                                  className={
-                                    i < review.rating
-                                      ? "text-yellow-400 fill-yellow-400"
-                                      : "text-gray-300 dark:text-gray-600"
-                                  }
-                                />
-                              ))}
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-1">
+                                <h4 className="font-medium text-dark dark:text-white">{review.userName}</h4>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">
+                                  {new Date(review.createdAt).toLocaleDateString("vi-VN")}
+                                </span>
+                              </div>
+                              <div className="flex mb-2">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    size={16}
+                                    className={
+                                      i < review.rating
+                                        ? "text-yellow-400 fill-yellow-400"
+                                        : "text-gray-300 dark:text-gray-600"
+                                    }
+                                  />
+                                ))}
+                              </div>
+                              <p className="text-gray-600 dark:text-gray-300">{review.comment}</p>
                             </div>
-                            <p className="text-gray-600 dark:text-gray-300">{review.comment}</p>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
+                      <p className="text-gray-500 dark:text-gray-400 mb-4">Chưa có đánh giá nào cho sản phẩm này</p>
+                      <button
+                        onClick={handleWriteReview}
+                        className="bg-primary hover:bg-primary-light text-dark py-2 px-4 rounded-lg text-sm transition-colors"
+                      >
+                        Hãy là người đầu tiên đánh giá
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -13,6 +13,7 @@ const Navbar = ({ setShowLogin }) => {
   const navigate = useNavigate()
   const location = useLocation()
   const [scrolled, setScrolled] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
 
   // Handle scroll effect
   useEffect(() => {
@@ -27,6 +28,19 @@ const Navbar = ({ setShowLogin }) => {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownOpen && !event.target.closest(".relative")) {
+        setDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [dropdownOpen])
 
   const logout = () => {
     localStorage.removeItem("token")
@@ -140,26 +154,37 @@ const Navbar = ({ setShowLogin }) => {
                 Đăng nhập
               </button>
             ) : (
-              <div className="relative group">
-                <button className="p-2 text-dark dark:text-white hover:text-primary dark:hover:text-primary transition-colors">
+              <div className="relative">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="p-2 text-dark dark:text-white hover:text-primary dark:hover:text-primary transition-colors"
+                  aria-expanded={dropdownOpen}
+                  aria-haspopup="true"
+                >
                   <User size={24} />
                 </button>
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-light rounded-xl shadow-custom py-2 z-10 hidden group-hover:block">
-                  <Link
-                    to="/myorders"
-                    className="block px-4 py-2 text-sm text-dark dark:text-white hover:bg-primary-light hover:text-dark flex items-center"
-                  >
-                    <Package size={16} className="mr-2" />
-                    Đơn hàng của tôi
-                  </Link>
-                  <button
-                    onClick={logout}
-                    className="block w-full text-left px-4 py-2 text-sm text-dark dark:text-white hover:bg-primary-light hover:text-dark flex items-center"
-                  >
-                    <LogOut size={16} className="mr-2" />
-                    Đăng xuất
-                  </button>
-                </div>
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-light rounded-xl shadow-custom py-2 z-10">
+                    <Link
+                      to="/myorders"
+                      className="block px-4 py-2 text-sm text-dark dark:text-white hover:bg-primary-light hover:text-dark flex items-center"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <Package size={16} className="mr-2" />
+                      Đơn hàng của tôi
+                    </Link>
+                    <button
+                      onClick={() => {
+                        logout()
+                        setDropdownOpen(false)
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-dark dark:text-white hover:bg-primary-light hover:text-dark flex items-center"
+                    >
+                      <LogOut size={16} className="mr-2" />
+                      Đăng xuất
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

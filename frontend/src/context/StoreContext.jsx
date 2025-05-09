@@ -10,6 +10,9 @@ const StoreContextProvider = (props) => {
   const url = "http://localhost:4000"
   const [token, setToken] = useState("")
   const [food_list, setFoodList] = useState([])
+  // Add user state to the context
+  const [user, setUser] = useState(null)
+  const [isLoadingUser, setIsLoadingUser] = useState(true)
 
   // Cập nhật hàm addToCart để sử dụng name thay vì itemId
   const addToCart = async (itemName, quantity = 1) => {
@@ -62,26 +65,97 @@ const StoreContextProvider = (props) => {
   }
 
   const fetchFoodList = async () => {
-    const response = await axios.get(url + "/api/food/list")
-    setFoodList(response.data.data)
+    try {
+      const response = await axios.get(url + "/api/food/list")
+      setFoodList(response.data.data)
+    } catch (error) {
+      console.error("Error fetching food list:", error)
+    }
   }
 
   const loadCartData = async (token) => {
-    const response = await axios.post(url + "/api/cart/get", {}, { headers: { token } })
-    setCartItems(response.data.cartData)
+    try {
+      const response = await axios.post(url + "/api/cart/get", {}, { headers: { token } })
+      setCartItems(response.data.cartData)
+    } catch (error) {
+      console.error("Error loading cart data:", error)
+    }
   }
 
+  const fetchUserData = async (token) => {
+    try {
+      console.log("Fetching user data with token")
+      const response = await axios.get(`${url}/api/user/profile`, {
+        headers: { token },
+      })
+
+      if (response.data.success && response.data.user) {
+        console.log("User data fetched successfully:", response.data.user)
+        setUser(response.data.user)
+        localStorage.setItem("user", JSON.stringify(response.data.user))
+        return response.data.user
+      } else {
+        console.error("Failed to fetch user data:", response.data)
+        return null
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error)
+      return null
+    }
+  }
+
+  // Update the useEffect to load user data from localStorage
   useEffect(() => {
     async function loadData() {
-      await fetchFoodList()
-      if (localStorage.getItem("token")) {
-        setToken(localStorage.getItem("token"))
-        await loadCartData(localStorage.getItem("token"))
+      setIsLoadingUser(true)
+
+      try {
+        await fetchFoodList()
+
+        const storedToken = localStorage.getItem("token")
+        if (storedToken) {
+          console.log("Found token in localStorage")
+          setToken(storedToken)
+
+          // Try to load user from localStorage first
+          const storedUser = localStorage.getItem("user")
+          if (storedUser) {
+            try {
+              const parsedUser = JSON.parse(storedUser)
+              console.log("Loaded user from localStorage:", parsedUser)
+              setUser(parsedUser)
+            } catch (error) {
+              console.error("Error parsing user data from localStorage:", error)
+            }
+          }
+
+          // Load cart data
+          await loadCartData(storedToken)
+
+          // If no user in localStorage or parsing failed, fetch from API
+          if (!user) {
+            await fetchUserData(storedToken)
+          }
+        }
+      } catch (error) {
+        console.error("Error in loadData:", error)
+      } finally {
+        setIsLoadingUser(false)
       }
     }
+
     loadData()
   }, [])
 
+  // Function to handle logout
+  const logout = () => {
+    setToken("")
+    setUser(null)
+    localStorage.removeItem("token")
+    localStorage.removeItem("user")
+  }
+
+  // Update the contextValue to include user and setUser
   const contextValue = {
     food_list,
     cartItems,
@@ -93,6 +167,11 @@ const StoreContextProvider = (props) => {
     url,
     token,
     setToken,
+    user,
+    setUser,
+    isLoadingUser,
+    logout,
+    fetchUserData,
   }
 
   return <StoreContext.Provider value={contextValue}>{props.children}</StoreContext.Provider>
