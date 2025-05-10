@@ -8,6 +8,10 @@ const commentSchema = new mongoose.Schema({
   userName: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
   isApproved: { type: Boolean, default: true },
+  adminReply: {
+    message: { type: String },
+    createdAt: { type: Date },
+  },
 })
 
 const commentModel = mongoose.models.comment || mongoose.model("comment", commentSchema)

@@ -558,6 +558,18 @@ const ProductDetail = () => {
                                 ))}
                               </div>
                               <p className="text-gray-600 dark:text-gray-300">{review.comment}</p>
+
+                              {/* Admin Reply */}
+                              {review.adminReply && review.adminReply.message && (
+                                <div className="mt-3 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800">
+                                  <p className="text-sm font-medium text-green-700 dark:text-green-300 mb-1">
+                                    {review.adminReply.message}
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {new Date(review.adminReply.createdAt).toLocaleDateString("vi-VN")}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>

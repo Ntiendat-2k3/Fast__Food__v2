@@ -33,6 +33,18 @@ const addComment = async (req, res) => {
     const savedComment = await newComment.save()
     console.log("Comment saved successfully:", savedComment._id)
 
+    // Automatically respond to all reviews
+    const autoResponse = {
+      adminReply: {
+        message: `Phản hồi của GreenEats:\nCảm ơn bạn ${user.name} đã đánh giá! Chúng tôi rất vui khi bạn hài lòng với dịch vụ và mong bạn sẽ quay lại ủng hộ chúng tôi.`,
+        createdAt: new Date(),
+      },
+    }
+
+    // Update the comment with the automatic response
+    await commentModel.findByIdAndUpdate(savedComment._id, autoResponse)
+    console.log("Added automatic response to review")
+
     res.json({
       success: true,
       message: "Thêm đánh giá thành công",
@@ -136,4 +148,43 @@ const deleteComment = async (req, res) => {
   }
 }
 
-export { addComment, getCommentsByFood, getAllComments, updateCommentStatus, deleteComment }
+// Reply to a comment
+const replyToComment = async (req, res) => {
+  try {
+    const { id, message } = req.body
+    console.log("Replying to comment:", { id, message })
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      console.log("Invalid comment ID:", id)
+      return res.json({ success: false, message: "ID đánh giá không hợp lệ" })
+    }
+
+    if (!message) {
+      return res.json({ success: false, message: "Nội dung phản hồi không được để trống" })
+    }
+
+    const updatedComment = await commentModel.findByIdAndUpdate(
+      id,
+      {
+        adminReply: {
+          message,
+          createdAt: new Date(),
+        },
+      },
+      { new: true },
+    )
+
+    if (!updatedComment) {
+      console.log("Comment not found with ID:", id)
+      return res.json({ success: false, message: "Không tìm thấy đánh giá" })
+    }
+
+    console.log("Comment reply added successfully:", updatedComment._id)
+    res.json({ success: true, message: "Thêm phản hồi thành công" })
+  } catch (error) {
+    console.log("Error replying to comment:", error)
+    res.json({ success: false, message: "Lỗi khi thêm phản hồi" })
+  }
+}
+
+export { addComment, getCommentsByFood, getAllComments, updateCommentStatus, deleteComment, replyToComment }

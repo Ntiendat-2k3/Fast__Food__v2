@@ -8,6 +8,8 @@ import cartRouter from "./routes/cartRoute.js"
 import orderRouter from "./routes/orderRoute.js"
 import voucherRouter from "./routes/voucherRoute.js"
 import commentRouter from "./routes/commentRoute.js"
+import notificationRouter from "./routes/notificationRoute.js"
+import feedbackRouter from "./routes/feedbackRoute.js"
 
 // app config
 const app = express()
@@ -28,6 +30,8 @@ app.use("/api/cart", cartRouter)
 app.use("/api/order", orderRouter)
 app.use("/api/voucher", voucherRouter)
 app.use("/api/comment", commentRouter)
+app.use("/api/notification", notificationRouter)
+app.use("/api/feedback", feedbackRouter)
 
 app.get("/", (req, res) => {
   res.send("API Working")

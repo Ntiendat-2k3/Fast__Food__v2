@@ -5,6 +5,7 @@ import {
   getAllComments,
   updateCommentStatus,
   deleteComment,
+  replyToComment,
 } from "../controllers/commentController.js"
 import auth from "../middleware/auth.js"
 
@@ -24,5 +25,8 @@ router.post("/status", auth, updateCommentStatus)
 
 // Delete a comment (admin only, requires authentication)
 router.post("/delete", auth, deleteComment)
+
+// Reply to a comment (admin only, requires authentication)
+router.post("/reply", auth, replyToComment)
 
 export default router

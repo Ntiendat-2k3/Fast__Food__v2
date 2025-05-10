@@ -4,16 +4,20 @@ import { useState, useContext, useEffect } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { StoreContext } from "../context/StoreContext"
 import { useTheme } from "../context/ThemeContext"
-import { ShoppingCart, User, LogOut, Package, Menu, X, Sun, Moon } from "lucide-react"
+import { ShoppingCart, User, LogOut, Package, Menu, X, Sun, Moon, Bell } from "lucide-react"
+import axios from "axios"
 
 const Navbar = ({ setShowLogin }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { getTotalCartAmount, token, setToken, cartItems } = useContext(StoreContext)
+  const { getTotalCartAmount, token, setToken, cartItems, url } = useContext(StoreContext)
   const { darkMode, toggleDarkMode } = useTheme()
   const navigate = useNavigate()
   const location = useLocation()
   const [scrolled, setScrolled] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [notifications, setNotifications] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
 
   // Handle scroll effect
   useEffect(() => {
@@ -31,8 +35,11 @@ const Navbar = ({ setShowLogin }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownOpen && !event.target.closest(".relative")) {
+      if (dropdownOpen && !event.target.closest(".user-dropdown")) {
         setDropdownOpen(false)
+      }
+      if (notificationsOpen && !event.target.closest(".notifications-dropdown")) {
+        setNotificationsOpen(false)
       }
     }
 
@@ -40,7 +47,57 @@ const Navbar = ({ setShowLogin }) => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
     }
-  }, [dropdownOpen])
+  }, [dropdownOpen, notificationsOpen])
+
+  // Fetch notifications
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!token) return
+
+      try {
+        const response = await axios.get(`${url}/api/notification/user`, {
+          headers: { token },
+        })
+
+        if (response.data.success) {
+          setNotifications(response.data.data)
+          // Count unread notifications
+          const unread = response.data.data.filter((notification) => !notification.read).length
+          setUnreadCount(unread)
+        }
+      } catch (error) {
+        console.error("Error fetching notifications:", error)
+      }
+    }
+
+    if (token) {
+      fetchNotifications()
+
+      // Set up polling to check for new notifications every minute
+      const intervalId = setInterval(fetchNotifications, 60000)
+      return () => clearInterval(intervalId)
+    }
+  }, [token, url])
+
+  const markAsRead = async (notificationId) => {
+    if (!token) return
+
+    try {
+      await axios.post(`${url}/api/notification/read`, { id: notificationId, read: true }, { headers: { token } })
+
+      // Update local state
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((notification) =>
+          notification._id === notificationId ? { ...notification, read: true } : notification,
+        ),
+      )
+
+      // Update unread count
+      setUnreadCount((prev) => Math.max(0, prev - 1))
+    } catch (error) {
+      console.error("Error marking notification as read:", error)
+    }
+  }
 
   const logout = () => {
     localStorage.removeItem("token")
@@ -49,6 +106,34 @@ const Navbar = ({ setShowLogin }) => {
   }
 
   const totalItems = Object.values(cartItems).reduce((a, b) => a + b, 0)
+
+  // Get notification type style
+  const getNotificationTypeStyle = (type) => {
+    switch (type) {
+      case "info":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+      case "warning":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+      case "success":
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+      case "error":
+        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+    }
+  }
+
+  // Format date
+  const formatDate = (dateString) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
 
   return (
     <header
@@ -134,6 +219,70 @@ const Navbar = ({ setShowLogin }) => {
               {darkMode ? <Sun size={24} /> : <Moon size={24} />}
             </button>
 
+            {/* Notifications */}
+            {token && (
+              <div className="notifications-dropdown relative">
+                <button
+                  onClick={() => setNotificationsOpen(!notificationsOpen)}
+                  className="relative p-2 text-dark dark:text-white hover:text-primary dark:hover:text-primary transition-colors"
+                  aria-expanded={notificationsOpen}
+                  aria-haspopup="true"
+                >
+                  <Bell size={24} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+                {notificationsOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-dark-light rounded-xl shadow-custom py-2 z-10 max-h-96 overflow-y-auto">
+                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                      <h3 className="font-medium text-dark dark:text-white">Thông báo</h3>
+                    </div>
+                    {notifications.length > 0 ? (
+                      <div>
+                        {notifications.map((notification) => (
+                          <div
+                            key={notification._id}
+                            className={`px-4 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-dark cursor-pointer ${
+                              !notification.read ? "bg-blue-50 dark:bg-blue-900/10" : ""
+                            }`}
+                            onClick={() => markAsRead(notification._id)}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <h4
+                                className={`font-medium ${!notification.read ? "text-primary" : "text-dark dark:text-white"}`}
+                              >
+                                {notification.title}
+                              </h4>
+                              <span
+                                className={`text-xs px-2 py-0.5 rounded-full ${getNotificationTypeStyle(notification.type)}`}
+                              >
+                                {notification.type === "info" && "Thông tin"}
+                                {notification.type === "warning" && "Cảnh báo"}
+                                {notification.type === "success" && "Thành công"}
+                                {notification.type === "error" && "Lỗi"}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">{notification.message}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatDate(notification.createdAt)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                        <Bell size={24} className="mx-auto mb-2 opacity-50" />
+                        <p>Không có thông báo nào</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             <Link
               to="/cart"
               className="relative p-2 text-dark dark:text-white hover:text-primary dark:hover:text-primary transition-colors"
@@ -154,7 +303,7 @@ const Navbar = ({ setShowLogin }) => {
                 Đăng nhập
               </button>
             ) : (
-              <div className="relative">
+              <div className="user-dropdown relative">
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="p-2 text-dark dark:text-white hover:text-primary dark:hover:text-primary transition-colors"

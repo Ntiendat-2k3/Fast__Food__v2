@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import axios from "axios"
 import { toast } from "react-toastify"
 import {
@@ -16,14 +16,12 @@ import {
   Bell,
   UserX,
   Send,
-  User,
   Calendar,
-  Clock,
   Reply,
   Eye,
   EyeOff,
-  MessageCircle,
   Shield,
+  Edit,
 } from "lucide-react"
 import ConfirmModal from "../../components/ConfirmModal"
 import Pagination from "../../components/Pagination"
@@ -32,7 +30,6 @@ const Comments = ({ url }) => {
   const [activeTab, setActiveTab] = useState("comments") // "comments", "notifications", or "blacklist"
   const [comments, setComments] = useState([])
   const [notifications, setNotifications] = useState([])
-  const [feedback, setFeedback] = useState([])
   const [blacklist, setBlacklist] = useState([])
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -45,11 +42,7 @@ const Comments = ({ url }) => {
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null, id: null, message: "" })
   const [foodList, setFoodList] = useState([])
   const [categories, setCategories] = useState([])
-  const [orderData, setOrderData] = useState([])
-  const [analyticsLoading, setAnalyticsLoading] = useState(false)
-  const [chartType, setChartType] = useState("bar") // "bar" or "pie"
-  const [orderStatuses, setOrderStatuses] = useState([]) // To store all available order statuses
-  const [debugInfo, setDebugInfo] = useState(null) // For debugging purposes
+  const selectedUserRef = useRef(null)
 
   // New notification form
   const [newNotification, setNewNotification] = useState({
@@ -65,9 +58,9 @@ const Comments = ({ url }) => {
     reason: "",
   })
 
-  // Reply to feedback form
+  // Reply to comment form
   const [replyForm, setReplyForm] = useState({
-    feedbackId: null,
+    commentId: null,
     message: "",
   })
 
@@ -147,7 +140,6 @@ const Comments = ({ url }) => {
         return
       }
 
-      // This is a mock implementation - replace with your actual API endpoint
       const response = await axios.get(`${url}/api/user/list`, {
         headers: {
           token: token,
@@ -158,21 +150,15 @@ const Comments = ({ url }) => {
         setUsers(response.data.data)
       } else {
         console.error("API returned error:", response.data.message)
+        toast.error(response.data.message || "Lỗi khi tải danh sách người dùng")
       }
     } catch (error) {
       console.error("Error fetching users:", error)
-      // If the API doesn't exist yet, use mock data
-      setUsers([
-        { _id: "1", name: "Nguyễn Văn A", email: "nguyenvana@example.com" },
-        { _id: "2", name: "Trần Thị B", email: "tranthib@example.com" },
-        { _id: "3", name: "Lê Văn C", email: "levanc@example.com" },
-        { _id: "4", name: "Phạm Thị D", email: "phamthid@example.com" },
-        { _id: "5", name: "Hoàng Văn E", email: "hoangvane@example.com" },
-      ])
+      toast.error("Lỗi kết nối đến máy chủ khi tải danh sách người dùng")
     }
   }
 
-  const fetchNotificationsAndFeedback = async () => {
+  const fetchNotifications = async () => {
     setNotificationsLoading(true)
     try {
       const token = localStorage.getItem("token")
@@ -182,10 +168,9 @@ const Comments = ({ url }) => {
         return
       }
 
-      // This is a mock implementation - replace with your actual API endpoints
-      // For notifications
+      // Fetch notifications
       try {
-        const notificationsResponse = await axios.get(`${url}/api/notification/list`, {
+        const notificationsResponse = await axios.get(`${url}/api/notification/all`, {
           headers: {
             token: token,
           },
@@ -193,94 +178,16 @@ const Comments = ({ url }) => {
 
         if (notificationsResponse.data.success) {
           setNotifications(notificationsResponse.data.data)
+        } else {
+          console.error("API returned error:", notificationsResponse.data.message)
+          toast.error(notificationsResponse.data.message || "Lỗi khi tải thông báo")
         }
       } catch (error) {
         console.error("Error fetching notifications:", error)
-        // Mock data if API doesn't exist yet
-        setNotifications([
-          {
-            _id: "n1",
-            title: "Khuyến mãi mới",
-            message: "Giảm 20% cho tất cả các đơn hàng trong tuần này!",
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            type: "info",
-            targetUser: "all",
-            read: false,
-          },
-          {
-            _id: "n2",
-            title: "Cập nhật hệ thống",
-            message: "Hệ thống sẽ bảo trì vào ngày 15/05/2023 từ 22:00 - 24:00",
-            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-            type: "warning",
-            targetUser: "all",
-            read: true,
-          },
-          {
-            _id: "n3",
-            title: "Món mới",
-            message: "Chúng tôi vừa thêm 5 món mới vào thực đơn. Hãy khám phá ngay!",
-            createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-            type: "success",
-            targetUser: "all",
-            read: true,
-          },
-        ])
-      }
-
-      // For feedback
-      try {
-        const feedbackResponse = await axios.get(`${url}/api/feedback/list`, {
-          headers: {
-            token: token,
-          },
-        })
-
-        if (feedbackResponse.data.success) {
-          setFeedback(feedbackResponse.data.data)
-        }
-      } catch (error) {
-        console.error("Error fetching feedback:", error)
-        // Mock data if API doesn't exist yet
-        setFeedback([
-          {
-            _id: "f1",
-            userId: "1",
-            userName: "Nguyễn Văn A",
-            message: "Tôi rất thích món gà rán của quán, nhưng giao hàng hơi chậm.",
-            createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-            status: "pending",
-            reply: null,
-          },
-          {
-            _id: "f2",
-            userId: "2",
-            userName: "Trần Thị B",
-            message: "Ứng dụng đặt hàng rất dễ sử dụng, tôi rất hài lòng!",
-            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            status: "replied",
-            reply: {
-              message: "Cảm ơn bạn đã đánh giá tích cực! Chúng tôi rất vui khi bạn hài lòng với dịch vụ.",
-              createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
-            },
-          },
-          {
-            _id: "f3",
-            userId: "3",
-            userName: "Lê Văn C",
-            message: "Tôi muốn đề xuất thêm món salad vào thực đơn.",
-            createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-            status: "replied",
-            reply: {
-              message:
-                "Cảm ơn đề xuất của bạn! Chúng tôi sẽ xem xét bổ sung món salad vào thực đơn trong thời gian tới.",
-              createdAt: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000).toISOString(),
-            },
-          },
-        ])
+        toast.error("Lỗi kết nối đến máy chủ khi tải thông báo")
       }
     } catch (error) {
-      console.error("Error in fetchNotificationsAndFeedback:", error)
+      console.error("Error in fetchNotifications:", error)
     } finally {
       setNotificationsLoading(false)
     }
@@ -296,52 +203,21 @@ const Comments = ({ url }) => {
         return
       }
 
-      // This is a mock implementation - replace with your actual API endpoint
-      try {
-        const response = await axios.get(`${url}/api/user/blacklist`, {
-          headers: {
-            token: token,
-          },
-        })
+      const response = await axios.get(`${url}/api/user/blacklist`, {
+        headers: {
+          token: token,
+        },
+      })
 
-        if (response.data.success) {
-          setBlacklist(response.data.data)
-        }
-      } catch (error) {
-        console.error("Error fetching blacklist:", error)
-        // Mock data if API doesn't exist yet
-        setBlacklist([
-          {
-            _id: "b1",
-            userId: "6",
-            userName: "Đỗ Văn F",
-            email: "dovanf@example.com",
-            reason: "Spam đánh giá giả mạo",
-            blockedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-            blockedBy: "Admin",
-          },
-          {
-            _id: "b2",
-            userId: "7",
-            userName: "Vũ Thị G",
-            email: "vuthig@example.com",
-            reason: "Ngôn ngữ không phù hợp trong đánh giá",
-            blockedAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-            blockedBy: "Admin",
-          },
-          {
-            _id: "b3",
-            userId: "8",
-            userName: "Ngô Văn H",
-            email: "ngovanh@example.com",
-            reason: "Lạm dụng chính sách hoàn tiền",
-            blockedAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-            blockedBy: "Admin",
-          },
-        ])
+      if (response.data.success) {
+        setBlacklist(response.data.data)
+      } else {
+        console.error("API returned error:", response.data.message)
+        toast.error(response.data.message || "Lỗi khi tải danh sách đen")
       }
     } catch (error) {
-      console.error("Error in fetchBlacklist:", error)
+      console.error("Error fetching blacklist:", error)
+      toast.error("Lỗi kết nối đến máy chủ khi tải danh sách đen")
     } finally {
       setBlacklistLoading(false)
     }
@@ -355,7 +231,7 @@ const Comments = ({ url }) => {
 
   useEffect(() => {
     if (activeTab === "notifications") {
-      fetchNotificationsAndFeedback()
+      fetchNotifications()
     } else if (activeTab === "blacklist") {
       fetchBlacklist()
     }
@@ -407,13 +283,12 @@ const Comments = ({ url }) => {
     })
   }
 
-  const handleSendNotification = () => {
+  const handleSendNotification = async () => {
     if (!newNotification.title || !newNotification.message) {
       toast.error("Vui lòng nhập tiêu đề và nội dung thông báo")
       return
     }
 
-    // This is a mock implementation - replace with your actual API call
     try {
       const token = localStorage.getItem("token")
       if (!token) {
@@ -421,17 +296,15 @@ const Comments = ({ url }) => {
         return
       }
 
-      // Simulate API call
-      setTimeout(() => {
-        // Add to local state for immediate feedback
-        const newNotificationObj = {
-          _id: `n${Date.now()}`,
-          ...newNotification,
-          createdAt: new Date().toISOString(),
-          read: false,
-        }
+      const response = await axios.post(`${url}/api/notification/create`, newNotification, {
+        headers: {
+          token: token,
+        },
+      })
 
-        setNotifications([newNotificationObj, ...notifications])
+      if (response.data.success) {
+        // Add to local state for immediate feedback
+        setNotifications([response.data.notification, ...notifications])
 
         // Reset form
         setNewNotification({
@@ -442,20 +315,23 @@ const Comments = ({ url }) => {
         })
 
         toast.success("Đã gửi thông báo thành công")
-      }, 500)
+        fetchNotifications()
+      } else {
+        console.error("API returned error:", response.data.message)
+        toast.error(response.data.message || "Lỗi khi gửi thông báo")
+      }
     } catch (error) {
       console.error("Error sending notification:", error)
-      toast.error("Lỗi khi gửi thông báo")
+      toast.error("Lỗi kết nối đến máy chủ khi gửi thông báo")
     }
   }
 
-  const handleReplyToFeedback = () => {
-    if (!replyForm.message || !replyForm.feedbackId) {
+  const handleReplyToComment = async () => {
+    if (!replyForm.message || !replyForm.commentId) {
       toast.error("Vui lòng nhập nội dung phản hồi")
       return
     }
 
-    // This is a mock implementation - replace with your actual API call
     try {
       const token = localStorage.getItem("token")
       if (!token) {
@@ -463,46 +339,62 @@ const Comments = ({ url }) => {
         return
       }
 
-      // Simulate API call
-      setTimeout(() => {
+      console.log("Sending reply:", { id: replyForm.commentId, message: replyForm.message })
+
+      const response = await axios.post(
+        `${url}/api/comment/reply`,
+        {
+          id: replyForm.commentId,
+          message: replyForm.message,
+        },
+        {
+          headers: {
+            token: token,
+          },
+        },
+      )
+
+      if (response.data.success) {
         // Update local state for immediate feedback
-        const updatedFeedback = feedback.map((item) => {
-          if (item._id === replyForm.feedbackId) {
+        const updatedComments = comments.map((item) => {
+          if (item._id === replyForm.commentId) {
             return {
               ...item,
-              status: "replied",
-              reply: {
+              adminReply: {
                 message: replyForm.message,
-                createdAt: new Date().toISOString(),
+                createdAt: new Date(),
               },
             }
           }
           return item
         })
 
-        setFeedback(updatedFeedback)
+        setComments(updatedComments)
 
         // Reset form
         setReplyForm({
-          feedbackId: null,
+          commentId: null,
           message: "",
         })
 
         toast.success("Đã gửi phản hồi thành công")
-      }, 500)
+        fetchComments()
+      } else {
+        console.error("API returned error:", response.data.message)
+        toast.error(response.data.message || "Lỗi khi gửi phản hồi")
+      }
     } catch (error) {
-      console.error("Error replying to feedback:", error)
-      toast.error("Lỗi khi gửi phản hồi")
+      console.error("Error replying to comment:", error)
+      toast.error("Lỗi kết nối đến máy chủ khi gửi phản hồi")
     }
   }
 
-  const handleBlockUser = () => {
+  const handleBlockUser = async () => {
     if (!blockUserForm.userId || !blockUserForm.reason) {
       toast.error("Vui lòng chọn người dùng và nhập lý do chặn")
       return
     }
 
-    // This is a mock implementation - replace with your actual API call
     try {
       const token = localStorage.getItem("token")
       if (!token) {
@@ -510,27 +402,30 @@ const Comments = ({ url }) => {
         return
       }
 
-      // Find user details
-      const user = users.find((u) => u._id === blockUserForm.userId)
-      if (!user) {
-        toast.error("Không tìm thấy thông tin người dùng")
+      // Find the selected user to display in confirmation
+      const selectedUser = users.find((user) => user._id === blockUserForm.userId)
+      if (!selectedUser) {
+        toast.error("Người dùng không hợp lệ, vui lòng chọn lại")
         return
       }
 
-      // Simulate API call
-      setTimeout(() => {
-        // Add to local state for immediate feedback
-        const newBlockedUser = {
-          _id: `b${Date.now()}`,
-          userId: user._id,
-          userName: user.name,
-          email: user.email,
-          reason: blockUserForm.reason,
-          blockedAt: new Date().toISOString(),
-          blockedBy: "Admin",
-        }
+      console.log("Blocking user:", selectedUser.name, selectedUser._id)
+      console.log("Block user form data:", blockUserForm)
 
-        setBlacklist([newBlockedUser, ...blacklist])
+      // Create a new object for the request to ensure we're not sending any extra data
+      const blockData = {
+        userId: blockUserForm.userId,
+        reason: blockUserForm.reason,
+      }
+
+      const response = await axios.post(`${url}/api/user/block`, blockData, {
+        headers: {
+          token: token,
+        },
+      })
+
+      if (response.data.success) {
+        toast.success(`Đã chặn người dùng ${selectedUser.name} thành công`)
 
         // Reset form
         setBlockUserForm({
@@ -538,25 +433,28 @@ const Comments = ({ url }) => {
           reason: "",
         })
 
-        toast.success(`Đã chặn người dùng ${user.name} thành công`)
-      }, 500)
+        // Refresh blacklist
+        fetchBlacklist()
+      } else {
+        console.error("API returned error:", response.data.message)
+        toast.error(response.data.message || "Lỗi khi chặn người dùng")
+      }
     } catch (error) {
       console.error("Error blocking user:", error)
-      toast.error("Lỗi khi chặn người dùng")
+      toast.error("Lỗi kết nối đến máy chủ khi chặn người dùng")
     }
   }
 
-  const handleUnblockUser = (userId) => {
+  const handleUnblockUser = (blacklistId) => {
     setConfirmModal({
       isOpen: true,
       type: "unblockUser",
-      id: userId,
+      id: blacklistId,
       message: "Bạn có chắc chắn muốn bỏ chặn người dùng này?",
     })
   }
 
-  const handleMarkNotificationRead = (notificationId, isRead) => {
-    // This is a mock implementation - replace with your actual API call
+  const handleMarkNotificationRead = async (notificationId, isRead) => {
     try {
       const token = localStorage.getItem("token")
       if (!token) {
@@ -564,8 +462,20 @@ const Comments = ({ url }) => {
         return
       }
 
-      // Simulate API call
-      setTimeout(() => {
+      const response = await axios.post(
+        `${url}/api/notification/read`,
+        {
+          id: notificationId,
+          read: isRead,
+        },
+        {
+          headers: {
+            token: token,
+          },
+        },
+      )
+
+      if (response.data.success) {
         // Update local state for immediate feedback
         const updatedNotifications = notifications.map((item) => {
           if (item._id === notificationId) {
@@ -578,12 +488,14 @@ const Comments = ({ url }) => {
         })
 
         setNotifications(updatedNotifications)
-
         toast.success(isRead ? "Đã đánh dấu đã đọc" : "Đã đánh dấu chưa đọc")
-      }, 300)
+      } else {
+        console.error("API returned error:", response.data.message)
+        toast.error(response.data.message || "Lỗi khi cập nhật trạng thái thông báo")
+      }
     } catch (error) {
       console.error("Error updating notification status:", error)
-      toast.error("Lỗi khi cập nhật trạng thái thông báo")
+      toast.error("Lỗi kết nối đến máy chủ khi cập nhật trạng thái thông báo")
     }
   }
 
@@ -598,17 +510,16 @@ const Comments = ({ url }) => {
 
   const handleConfirmAction = async () => {
     const { type, id } = confirmModal
+    const token = localStorage.getItem("token")
+
+    if (!token) {
+      toast.error("Vui lòng đăng nhập lại để tiếp tục")
+      setConfirmModal({ isOpen: false, type: null, id: null, message: "" })
+      return
+    }
 
     if (type === "deleteComment") {
       try {
-        const token = localStorage.getItem("token")
-        if (!token) {
-          toast.error("Vui lòng đăng nhập lại để tiếp tục")
-          setConfirmModal({ isOpen: false, type: null, id: null, message: "" })
-          return
-        }
-
-        console.log("Deleting comment:", id)
         const response = await axios.post(
           `${url}/api/comment/delete`,
           { id },
@@ -618,8 +529,6 @@ const Comments = ({ url }) => {
             },
           },
         )
-
-        console.log("Delete response:", response.data)
 
         if (response.data.success) {
           toast.success("Xóa đánh giá thành công")
@@ -633,32 +542,54 @@ const Comments = ({ url }) => {
         toast.error("Lỗi kết nối đến máy chủ")
       }
     } else if (type === "deleteNotification") {
-      // This is a mock implementation - replace with your actual API call
       try {
-        // Simulate API call
-        setTimeout(() => {
+        const response = await axios.post(
+          `${url}/api/notification/delete`,
+          { id },
+          {
+            headers: {
+              token: token,
+            },
+          },
+        )
+
+        if (response.data.success) {
           // Update local state
           const updatedNotifications = notifications.filter((item) => item._id !== id)
           setNotifications(updatedNotifications)
           toast.success("Đã xóa thông báo thành công")
-        }, 300)
+        } else {
+          console.error("API returned error:", response.data.message)
+          toast.error(response.data.message || "Lỗi khi xóa thông báo")
+        }
       } catch (error) {
         console.error("Error deleting notification:", error)
-        toast.error("Lỗi khi xóa thông báo")
+        toast.error("Lỗi kết nối đến máy chủ khi xóa thông báo")
       }
     } else if (type === "unblockUser") {
-      // This is a mock implementation - replace with your actual API call
       try {
-        // Simulate API call
-        setTimeout(() => {
+        const response = await axios.post(
+          `${url}/api/user/unblock`,
+          { blacklistId: id },
+          {
+            headers: {
+              token: token,
+            },
+          },
+        )
+
+        if (response.data.success) {
           // Update local state
           const updatedBlacklist = blacklist.filter((item) => item._id !== id)
           setBlacklist(updatedBlacklist)
           toast.success("Đã bỏ chặn người dùng thành công")
-        }, 300)
+        } else {
+          console.error("API returned error:", response.data.message)
+          toast.error(response.data.message || "Lỗi khi bỏ chặn người dùng")
+        }
       } catch (error) {
         console.error("Error unblocking user:", error)
-        toast.error("Lỗi khi bỏ chặn người dùng")
+        toast.error("Lỗi kết nối đến máy chủ khi bỏ chặn người dùng")
       }
     }
 
@@ -732,13 +663,6 @@ const Comments = ({ url }) => {
     return notifications.slice(indexOfFirstItem, indexOfLastItem)
   }
 
-  // Get current page items for feedback
-  const getCurrentFeedback = () => {
-    const indexOfLastItem = notificationsPage * itemsPerPage
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage
-    return feedback.slice(indexOfFirstItem, indexOfLastItem)
-  }
-
   // Get current page items for blacklist
   const getCurrentBlacklist = () => {
     const indexOfLastItem = blacklistPage * itemsPerPage
@@ -748,7 +672,6 @@ const Comments = ({ url }) => {
 
   const totalCommentsPages = Math.ceil(filteredComments.length / itemsPerPage)
   const totalNotificationsPages = Math.ceil(notifications.length / itemsPerPage)
-  const totalFeedbackPages = Math.ceil(feedback.length / itemsPerPage)
   const totalBlacklistPages = Math.ceil(blacklist.length / itemsPerPage)
 
   const handlePageChange = (pageNumber) => {
@@ -765,22 +688,7 @@ const Comments = ({ url }) => {
 
   const currentComments = getCurrentComments()
   const currentNotifications = getCurrentNotifications()
-  const currentFeedback = getCurrentFeedback()
   const currentBlacklist = getCurrentBlacklist()
-
-  // Chart colors
-  const chartColors = [
-    "#FF6384",
-    "#36A2EB",
-    "#FFCE56",
-    "#4BC0C0",
-    "#9966FF",
-    "#FF9F40",
-    "#8AC926",
-    "#1982C4",
-    "#6A4C93",
-    "#F94144",
-  ]
 
   // Get notification type style
   const getNotificationTypeStyle = (type) => {
@@ -796,6 +704,14 @@ const Comments = ({ url }) => {
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
     }
+  }
+
+  // Handle user selection for blacklist
+  const handleUserSelect = (e) => {
+    const userId = e.target.value
+    console.log("User selected:", userId)
+    selectedUserRef.current = userId
+    setBlockUserForm({ ...blockUserForm, userId })
   }
 
   return (
@@ -828,7 +744,7 @@ const Comments = ({ url }) => {
             onClick={() => setActiveTab("notifications")}
           >
             <Bell className="mr-2" size={16} />
-            Thông báo & Phản hồi
+            Thông báo
           </button>
           <button
             className={`py-3 px-4 font-medium text-sm flex items-center whitespace-nowrap ${
@@ -1019,6 +935,85 @@ const Comments = ({ url }) => {
                         </span>
                       </div>
                       <p className="text-gray-700 dark:text-gray-300">{comment.comment}</p>
+
+                      {/* Admin Reply Section */}
+                      {comment.adminReply && comment.adminReply.message && replyForm.commentId !== comment._id ? (
+                        <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center text-sm font-medium text-blue-700 dark:text-blue-300 mb-1">
+                              <Reply size={14} className="mr-1" />
+                              Phản hồi của quản trị viên:
+                            </div>
+                            <button
+                              onClick={() =>
+                                setReplyForm({ commentId: comment._id, message: comment.adminReply.message })
+                              }
+                              className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                              title="Chỉnh sửa phản hồi"
+                            >
+                              <Edit size={14} />
+                            </button>
+                          </div>
+                          <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-line">
+                            {comment.adminReply.message}
+                          </p>
+                          {comment.adminReply.createdAt && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {formatDate(comment.adminReply.createdAt)}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="mt-3">
+                          <div className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <Reply size={14} className="mr-1" />
+                            {replyForm.commentId === comment._id && comment.adminReply && comment.adminReply.message
+                              ? "Chỉnh sửa phản hồi:"
+                              : "Thêm phản hồi:"}
+                          </div>
+                          <textarea
+                            placeholder="Nhập phản hồi của bạn..."
+                            rows={3}
+                            value={replyForm.commentId === comment._id ? replyForm.message : ""}
+                            onChange={(e) => setReplyForm({ commentId: comment._id, message: e.target.value })}
+                            onClick={() => {
+                              if (replyForm.commentId !== comment._id) {
+                                setReplyForm({
+                                  commentId: comment._id,
+                                  message: comment.adminReply?.message || "",
+                                })
+                              }
+                            }}
+                            className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                          />
+                          <div className="flex justify-end mt-2 gap-2">
+                            {replyForm.commentId === comment._id &&
+                              comment.adminReply &&
+                              comment.adminReply.message && (
+                                <button
+                                  onClick={() => setReplyForm({ commentId: null, message: "" })}
+                                  className="px-3 py-1 rounded-lg text-sm flex items-center bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                                >
+                                  Hủy
+                                </button>
+                              )}
+                            <button
+                              onClick={handleReplyToComment}
+                              disabled={!replyForm.message || replyForm.commentId !== comment._id}
+                              className={`px-3 py-1 rounded-lg text-sm flex items-center ${
+                                !replyForm.message || replyForm.commentId !== comment._id
+                                  ? "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+                                  : "bg-primary text-white hover:bg-primary-dark"
+                              }`}
+                            >
+                              <Send size={14} className="mr-1" />
+                              {replyForm.commentId === comment._id && comment.adminReply && comment.adminReply.message
+                                ? "Cập nhật"
+                                : "Gửi phản hồi"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -1036,291 +1031,183 @@ const Comments = ({ url }) => {
           </>
         )}
 
-        {/* Notifications & Feedback Tab */}
+        {/* Notifications Tab */}
         {activeTab === "notifications" && (
           <div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Notifications Section */}
-              <div className="bg-white dark:bg-dark-lighter rounded-xl shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 flex items-center">
-                  <Bell className="mr-2" size={20} />
-                  Quản lý thông báo
-                </h2>
+            <div className="bg-white dark:bg-dark-lighter rounded-xl shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 flex items-center">
+                <Bell className="mr-2" size={20} />
+                Quản lý thông báo
+              </h2>
 
-                {/* New Notification Form */}
-                <div className="bg-gray-50 dark:bg-dark rounded-lg p-4 mb-6">
-                  <h3 className="text-md font-medium text-gray-800 dark:text-white mb-4">Tạo thông báo mới</h3>
+              {/* New Notification Form */}
+              <div className="bg-gray-50 dark:bg-dark rounded-lg p-4 mb-6">
+                <h3 className="text-md font-medium text-gray-800 dark:text-white mb-4">Tạo thông báo mới</h3>
 
-                  <div className="space-y-4">
+                <div className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="notification-title"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    >
+                      Tiêu đề
+                    </label>
+                    <input
+                      id="notification-title"
+                      type="text"
+                      value={newNotification.title}
+                      onChange={(e) => setNewNotification({ ...newNotification, title: e.target.value })}
+                      placeholder="Nhập tiêu đề thông báo"
+                      className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="notification-message"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    >
+                      Nội dung
+                    </label>
+                    <textarea
+                      id="notification-message"
+                      value={newNotification.message}
+                      onChange={(e) => setNewNotification({ ...newNotification, message: e.target.value })}
+                      placeholder="Nhập nội dung thông báo"
+                      rows={3}
+                      className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label
-                        htmlFor="notification-title"
+                        htmlFor="notification-target"
                         className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                       >
-                        Tiêu đề
+                        Đối tượng
                       </label>
-                      <input
-                        id="notification-title"
-                        type="text"
-                        value={newNotification.title}
-                        onChange={(e) => setNewNotification({ ...newNotification, title: e.target.value })}
-                        placeholder="Nhập tiêu đề thông báo"
+                      <select
+                        id="notification-target"
+                        value={newNotification.targetUser}
+                        onChange={(e) => setNewNotification({ ...newNotification, targetUser: e.target.value })}
                         className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
+                      >
+                        <option value="all">Tất cả người dùng</option>
+                        {users.map((user) => (
+                          <option key={user._id} value={user._id}>
+                            {user.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div>
                       <label
-                        htmlFor="notification-message"
+                        htmlFor="notification-type"
                         className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                       >
-                        Nội dung
+                        Loại thông báo
                       </label>
-                      <textarea
-                        id="notification-message"
-                        value={newNotification.message}
-                        onChange={(e) => setNewNotification({ ...newNotification, message: e.target.value })}
-                        placeholder="Nhập nội dung thông báo"
-                        rows={3}
+                      <select
+                        id="notification-type"
+                        value={newNotification.type}
+                        onChange={(e) => setNewNotification({ ...newNotification, type: e.target.value })}
                         className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label
-                          htmlFor="notification-target"
-                          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                        >
-                          Đối tượng
-                        </label>
-                        <select
-                          id="notification-target"
-                          value={newNotification.targetUser}
-                          onChange={(e) => setNewNotification({ ...newNotification, targetUser: e.target.value })}
-                          className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                        >
-                          <option value="all">Tất cả người dùng</option>
-                          {users.map((user) => (
-                            <option key={user._id} value={user._id}>
-                              {user.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="notification-type"
-                          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                        >
-                          Loại thông báo
-                        </label>
-                        <select
-                          id="notification-type"
-                          value={newNotification.type}
-                          onChange={(e) => setNewNotification({ ...newNotification, type: e.target.value })}
-                          className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                        >
-                          <option value="info">Thông tin</option>
-                          <option value="warning">Cảnh báo</option>
-                          <option value="success">Thành công</option>
-                          <option value="error">Lỗi</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end">
-                      <button
-                        onClick={handleSendNotification}
-                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center"
                       >
-                        <Send size={16} className="mr-2" />
-                        Gửi thông báo
-                      </button>
+                        <option value="info">Thông tin</option>
+                        <option value="warning">Cảnh báo</option>
+                        <option value="success">Thành công</option>
+                        <option value="error">Lỗi</option>
+                      </select>
                     </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleSendNotification}
+                      className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center"
+                    >
+                      <Send size={16} className="mr-2" />
+                      Gửi thông báo
+                    </button>
                   </div>
                 </div>
+              </div>
 
-                {/* Notifications List */}
-                <h3 className="text-md font-medium text-gray-800 dark:text-white mb-4">Danh sách thông báo</h3>
+              {/* Notifications List */}
+              <h3 className="text-md font-medium text-gray-800 dark:text-white mb-4">Danh sách thông báo</h3>
 
-                {notificationsLoading ? (
-                  <div className="flex justify-center items-center h-40">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
-                ) : currentNotifications.length > 0 ? (
-                  <div className="space-y-4">
-                    {currentNotifications.map((notification) => (
+              {notificationsLoading ? (
+                <div className="flex justify-center items-center h-40">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : currentNotifications.length > 0 ? (
+                <div className="space-y-4">
+                  {currentNotifications.map((notification) => (
+                    <div
+                      key={notification._id}
+                      className={`border rounded-lg overflow-hidden ${notification.read ? "border-gray-200 dark:border-gray-700" : "border-primary dark:border-primary/70"}`}
+                    >
                       <div
-                        key={notification._id}
-                        className={`border rounded-lg overflow-hidden ${notification.read ? "border-gray-200 dark:border-gray-700" : "border-primary dark:border-primary/70"}`}
+                        className={`px-4 py-3 flex justify-between items-center ${getNotificationTypeStyle(notification.type)}`}
                       >
-                        <div
-                          className={`px-4 py-3 flex justify-between items-center ${getNotificationTypeStyle(notification.type)}`}
-                        >
-                          <div className="font-medium">{notification.title}</div>
-                          <div className="flex items-center space-x-1">
-                            {notification.read ? (
-                              <button
-                                onClick={() => handleMarkNotificationRead(notification._id, false)}
-                                className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                                title="Đánh dấu chưa đọc"
-                              >
-                                <EyeOff size={16} />
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleMarkNotificationRead(notification._id, true)}
-                                className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                                title="Đánh dấu đã đọc"
-                              >
-                                <Eye size={16} />
-                              </button>
-                            )}
+                        <div className="font-medium">{notification.title}</div>
+                        <div className="flex items-center space-x-1">
+                          {notification.read ? (
                             <button
-                              onClick={() => handleDeleteNotification(notification._id)}
+                              onClick={() => handleMarkNotificationRead(notification._id, false)}
                               className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                              title="Xóa thông báo"
+                              title="Đánh dấu chưa đọc"
                             >
-                              <Trash2 size={16} />
+                              <EyeOff size={16} />
                             </button>
-                          </div>
-                        </div>
-                        <div className="p-4 bg-white dark:bg-dark">
-                          <p className="text-gray-700 dark:text-gray-300 mb-3">{notification.message}</p>
-                          <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
-                            <div className="flex items-center">
-                              <Calendar size={14} className="mr-1" />
-                              {formatDate(notification.createdAt)}
-                            </div>
-                            <div>{notification.targetUser === "all" ? "Tất cả người dùng" : "Người dùng cụ thể"}</div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Pagination */}
-                    {totalNotificationsPages > 1 && (
-                      <Pagination
-                        currentPage={notificationsPage}
-                        totalPages={totalNotificationsPages}
-                        onPageChange={handleNotificationsPageChange}
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 bg-gray-50 dark:bg-dark rounded-lg">
-                    <Bell size={40} className="mx-auto mb-3 text-gray-400" />
-                    <p className="text-gray-500 dark:text-gray-400">Chưa có thông báo nào</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Feedback Section */}
-              <div className="bg-white dark:bg-dark-lighter rounded-xl shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 flex items-center">
-                  <MessageCircle className="mr-2" size={20} />
-                  Phản hồi từ người dùng
-                </h2>
-
-                {notificationsLoading ? (
-                  <div className="flex justify-center items-center h-40">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                  </div>
-                ) : currentFeedback.length > 0 ? (
-                  <div className="space-y-6">
-                    {currentFeedback.map((item) => (
-                      <div
-                        key={item._id}
-                        className={`border rounded-lg overflow-hidden ${
-                          item.status === "pending"
-                            ? "border-yellow-200 dark:border-yellow-900"
-                            : "border-green-200 dark:border-green-900"
-                        }`}
-                      >
-                        <div
-                          className={`px-4 py-3 flex justify-between items-center ${
-                            item.status === "pending"
-                              ? "bg-yellow-50 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
-                              : "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                          }`}
-                        >
-                          <div className="font-medium flex items-center">
-                            <User size={16} className="mr-2" />
-                            {item.userName}
-                          </div>
-                          <div className="text-xs">{item.status === "pending" ? "Chưa phản hồi" : "Đã phản hồi"}</div>
-                        </div>
-
-                        <div className="p-4 bg-white dark:bg-dark">
-                          <p className="text-gray-700 dark:text-gray-300 mb-3">{item.message}</p>
-                          <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-3">
-                            <div className="flex items-center">
-                              <Calendar size={14} className="mr-1" />
-                              {formatDate(item.createdAt)}
-                            </div>
-                          </div>
-
-                          {/* Reply section */}
-                          {item.reply ? (
-                            <div className="mt-4 bg-gray-50 dark:bg-dark-lighter rounded-lg p-3">
-                              <div className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <Reply size={14} className="mr-1" />
-                                Phản hồi của bạn:
-                              </div>
-                              <p className="text-gray-600 dark:text-gray-400 text-sm">{item.reply.message}</p>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center">
-                                <Clock size={12} className="mr-1" />
-                                {formatDate(item.reply.createdAt)}
-                              </div>
-                            </div>
                           ) : (
-                            <div className="mt-3">
-                              <textarea
-                                placeholder="Nhập phản hồi của bạn..."
-                                rows={2}
-                                value={replyForm.feedbackId === item._id ? replyForm.message : ""}
-                                onChange={(e) => setReplyForm({ feedbackId: item._id, message: e.target.value })}
-                                onClick={() => setReplyForm({ feedbackId: item._id, message: "" })}
-                                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                              />
-                              <div className="flex justify-end mt-2">
-                                <button
-                                  onClick={handleReplyToFeedback}
-                                  disabled={!replyForm.message || replyForm.feedbackId !== item._id}
-                                  className={`px-3 py-1 rounded-lg text-sm flex items-center ${
-                                    !replyForm.message || replyForm.feedbackId !== item._id
-                                      ? "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
-                                      : "bg-primary text-white hover:bg-primary-dark"
-                                  }`}
-                                >
-                                  <Send size={14} className="mr-1" />
-                                  Gửi phản hồi
-                                </button>
-                              </div>
-                            </div>
+                            <button
+                              onClick={() => handleMarkNotificationRead(notification._id, true)}
+                              className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                              title="Đánh dấu đã đọc"
+                            >
+                              <Eye size={16} />
+                            </button>
                           )}
+                          <button
+                            onClick={() => handleDeleteNotification(notification._id)}
+                            className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                            title="Xóa thông báo"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </div>
-                    ))}
+                      <div className="p-4 bg-white dark:bg-dark">
+                        <p className="text-gray-700 dark:text-gray-300 mb-3">{notification.message}</p>
+                        <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
+                          <div className="flex items-center">
+                            <Calendar size={14} className="mr-1" />
+                            {formatDate(notification.createdAt)}
+                          </div>
+                          <div>{notification.targetUser === "all" ? "Tất cả người dùng" : "Người dùng cụ thể"}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
 
-                    {/* Pagination */}
-                    {totalFeedbackPages > 1 && (
-                      <Pagination
-                        currentPage={notificationsPage}
-                        totalPages={totalFeedbackPages}
-                        onPageChange={handleNotificationsPageChange}
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 bg-gray-50 dark:bg-dark rounded-lg">
-                    <MessageCircle size={40} className="mx-auto mb-3 text-gray-400" />
-                    <p className="text-gray-500 dark:text-gray-400">Chưa có phản hồi nào từ người dùng</p>
-                  </div>
-                )}
-              </div>
+                  {/* Pagination */}
+                  {totalNotificationsPages > 1 && (
+                    <Pagination
+                      currentPage={notificationsPage}
+                      totalPages={totalNotificationsPages}
+                      onPageChange={handleNotificationsPageChange}
+                    />
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 dark:bg-dark rounded-lg">
+                  <Bell size={40} className="mx-auto mb-3 text-gray-400" />
+                  <p className="text-gray-500 dark:text-gray-400">Chưa có thông báo nào</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1348,7 +1235,7 @@ const Comments = ({ url }) => {
                       <select
                         id="block-user"
                         value={blockUserForm.userId}
-                        onChange={(e) => setBlockUserForm({ ...blockUserForm, userId: e.target.value })}
+                        onChange={handleUserSelect}
                         className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="">-- Chọn người dùng --</option>
@@ -1358,6 +1245,12 @@ const Comments = ({ url }) => {
                           </option>
                         ))}
                       </select>
+                      {blockUserForm.userId && (
+                        <p className="mt-1 text-sm text-green-600">
+                          Đã chọn:{" "}
+                          {users.find((u) => u._id === blockUserForm.userId)?.name || "Người dùng không xác định"}
+                        </p>
+                      )}
                     </div>
 
                     <div>
