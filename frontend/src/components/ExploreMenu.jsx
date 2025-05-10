@@ -1,36 +1,40 @@
 "use client"
-import { menu_list } from "../assets/assets"
+
+import { motion } from "framer-motion"
 
 const ExploreMenu = ({ category, setCategory }) => {
+  const categories = [
+    { id: "All", name: "Tất cả" },
+    { id: "Burger", name: "Burger" },
+    { id: "Burito", name: "Burito" },
+    { id: "Chicken", name: "Chicken" },
+    { id: "Hotdog", name: "Hotdog" },
+    { id: "Pasta", name: "Pasta" },
+    { id: "Salad", name: "Salad" },
+    { id: "Sandwich", name: "Sandwich" },
+    { id: "Tart", name: "Tart" },
+  ]
+
   return (
-    <div className="mb-8">
-      <div className="flex overflow-x-auto pb-4 space-x-6 scrollbar-hide">
-        {menu_list.map((item, index) => {
-          return (
-            <div
-              onClick={() => setCategory((prev) => (prev === item.menu_name ? "All" : item.menu_name))}
-              key={index}
-              className="flex flex-col items-center cursor-pointer min-w-[100px]"
+    <div className="mb-10">
+      <div className="flex justify-center">
+        <div className="bg-white dark:bg-dark-light rounded-xl shadow-md p-2 inline-flex flex-wrap justify-center gap-1 md:gap-2 max-w-full overflow-x-auto scrollbar-hide">
+          {categories.map((item) => (
+            <motion.button
+              key={item.id}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setCategory(item.id)}
+              className={`px-4 py-2 rounded-lg text-sm md:text-base font-medium transition-all whitespace-nowrap ${
+                category === item.id
+                  ? "bg-primary text-white"
+                  : "bg-gray-100 dark:bg-dark-lighter text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark"
+              }`}
             >
-              <div
-                className={`w-20 h-20 rounded-full overflow-hidden mb-2 ${
-                  category === item.menu_name
-                    ? "ring-4 ring-primary ring-offset-2 ring-offset-white dark:ring-offset-dark"
-                    : "ring-2 ring-gray-200 dark:ring-gray-700"
-                }`}
-              >
-                <img
-                  src={item.menu_image || "/placeholder.svg"}
-                  alt={item.menu_name}
-                  className="w-full h-full object-cover transition-transform hover:scale-110"
-                />
-              </div>
-              <p className="text-center text-sm font-medium text-dark dark:text-white">{item.menu_name}</p>
-            </div>
-          )
-        })}
+              {item.name}
+            </motion.button>
+          ))}
+        </div>
       </div>
-      <div className="h-px bg-gray-200 dark:bg-gray-700 my-4"></div>
     </div>
   )
 }

@@ -60,7 +60,7 @@ const Login = ({ url, onLogin, isAuthenticated }) => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full bg-gray-800 rounded-xl shadow-xl overflow-hidden border border-gray-700">
         <div className="px-6 py-8">
           <div className="text-center mb-8">
