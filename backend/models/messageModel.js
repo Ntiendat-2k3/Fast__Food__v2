@@ -4,7 +4,6 @@ const messageSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
       required: true,
     },
     userName: {
@@ -13,11 +12,11 @@ const messageSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: false,
+      required: true,
     },
     image: {
       type: String,
-      required: false,
+      default: null,
     },
     isAdmin: {
       type: Boolean,
@@ -27,10 +26,12 @@ const messageSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    recipientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
   },
   { timestamps: true },
 )
 
-const messageModel = mongoose.model("Message", messageSchema)
-
-export default messageModel
+export default mongoose.model("Message", messageSchema)

@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken"
 import userModel from "../models/userModel.js"
 
-const auth = async (req, res, next) => {
+// Middleware to check if user is authenticated
+export const requireSignIn = async (req, res, next) => {
   try {
     console.log("Auth middleware headers:", req.headers)
 
@@ -45,4 +46,35 @@ const auth = async (req, res, next) => {
   }
 }
 
-export default auth
+// Middleware to check if user is admin
+export const isAdmin = async (req, res, next) => {
+  try {
+    // Check if user exists in request (should be set by requireSignIn middleware)
+    if (!req.user) {
+      return res.json({
+        success: false,
+        message: "Authentication failed: User not found",
+      })
+    }
+
+    // Check if user is admin
+    if (req.user.role !== "admin") {
+      return res.json({
+        success: false,
+        message: "Authorization failed: Admin access required",
+      })
+    }
+
+    // User is admin, proceed to next middleware
+    next()
+  } catch (error) {
+    console.error("Admin check middleware error:", error)
+    return res.json({
+      success: false,
+      message: "Authorization failed: Server error",
+    })
+  }
+}
+
+// For backward compatibility
+export default requireSignIn

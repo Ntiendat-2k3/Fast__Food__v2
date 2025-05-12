@@ -1,8 +1,4 @@
 import express from "express"
-import multer from "multer"
-import path from "path"
-import { fileURLToPath } from "url"
-import fs from "fs"
 import {
   sendMessage,
   getUserMessages,
@@ -10,56 +6,42 @@ import {
   getUserConversation,
   markAsRead,
 } from "../controllers/messageController.js"
-import auth from "../middleware/auth.js"
+import { requireSignIn, isAdmin } from "../middleware/auth.js"
+import multer from "multer"
+import path from "path"
+import { fileURLToPath } from "url"
+import fs from "fs"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const router = express.Router()
 
-// Set up multer for file uploads
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const uploadDir = path.join(__dirname, "../uploads/chat")
-
-// Create uploads directory if it doesn't exist
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true })
-}
-
+// Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir)
+    const uploadPath = path.join(__dirname, "..", "uploads", "chat")
+
+    // Create the directory if it doesn't exist
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true })
+    }
+
+    cb(null, uploadPath)
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9)
-    const ext = path.extname(file.originalname)
-    cb(null, "chat-" + uniqueSuffix + ext)
+    cb(null, uniqueSuffix + path.extname(file.originalname))
   },
 })
 
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    // Accept images only
-    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-      return cb(new Error("Only image files are allowed!"), false)
-    }
-    cb(null, true)
-  },
-})
+const upload = multer({ storage: storage })
 
-// Send a message (with optional image)
-router.post("/send", auth, upload.single("image"), sendMessage)
-
-// Get messages for current user
-router.get("/user", auth, getUserMessages)
-
-// Get all users with messages (admin only)
-router.get("/all", auth, getAllMessages)
-
-// Get conversation with specific user (admin only)
-router.get("/conversation/:userId", auth, getUserConversation)
-
-// Mark message as read
-router.post("/read", auth, markAsRead)
+// Routes
+router.post("/send", requireSignIn, upload.single("image"), sendMessage)
+router.get("/user", requireSignIn, getUserMessages)
+router.get("/all", requireSignIn, isAdmin, getAllMessages)
+router.get("/conversation/:userId", requireSignIn, isAdmin, getUserConversation)
+router.post("/read", requireSignIn, markAsRead)
 
 export default router

@@ -22,16 +22,18 @@ const sendMessage = async (req, res) => {
     // Handle image upload if present
     let imagePath = null
     if (req.file) {
-      imagePath = req.file.filename
+      // Store the relative path to the image
+      imagePath = `chat/${path.basename(req.file.path)}`
     }
 
     // Create new message
     const newMessage = new messageModel({
       userId: user.role === "admin" ? userId : senderId, // If admin, use the target userId
       userName: user.name,
-      content,
+      content: content || "",
       image: imagePath,
       isAdmin: user.role === "admin",
+      recipientId: user.role === "admin" ? userId : null, // Store the recipient ID for admin messages
     })
 
     await newMessage.save()
@@ -52,10 +54,13 @@ const getUserMessages = async (req, res) => {
   try {
     const userId = req.user._id
 
-    // Get all messages for this user or from admin
+    // Get all messages for this user or from admin to this user
     const messages = await messageModel
       .find({
-        $or: [{ userId }, { isAdmin: true }],
+        $or: [
+          { userId }, // Messages from this user
+          { recipientId: userId, isAdmin: true }, // Admin messages to this user
+        ],
       })
       .sort({ createdAt: 1 })
 
@@ -106,7 +111,10 @@ const getUserConversation = async (req, res) => {
     // Get all messages between admin and this user
     const messages = await messageModel
       .find({
-        $or: [{ userId }, { isAdmin: true }],
+        $or: [
+          { userId, isAdmin: false }, // Messages from this specific user
+          { recipientId: userId, isAdmin: true }, // Admin messages specifically for this user
+        ],
       })
       .sort({ createdAt: 1 })
 

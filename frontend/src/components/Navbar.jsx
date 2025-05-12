@@ -8,7 +8,7 @@ import { ShoppingCart, User, LogOut, Package, Menu, X, Sun, Moon, Bell } from "l
 import axios from "axios"
 
 const Navbar = ({ setShowLogin }) => {
-  const { getTotalCartAmount, token, setToken, cartItems, url, user } = useContext(StoreContext)
+  const { getTotalCartAmount, token, setToken, cartItems, url, user, setUser } = useContext(StoreContext)
   const { darkMode, toggleDarkMode } = useTheme()
   const navigate = useNavigate()
   const location = useLocation()
@@ -103,6 +103,7 @@ const Navbar = ({ setShowLogin }) => {
     localStorage.removeItem("token")
     localStorage.removeItem("user")
     setToken("")
+    setUser(null)
     navigate("/")
   }
 
@@ -204,7 +205,7 @@ const Navbar = ({ setShowLogin }) => {
           {/* Right Side Icons */}
           <div className="flex items-center space-x-4">
             {/* User Greeting - Show when logged in */}
-            {user && (
+            {token && user && (
               <div className="hidden md:flex items-center mr-2">
                 <span className="text-white font-medium">
                   Hi, <span className="text-primary">{user.name}</span>
@@ -352,7 +353,7 @@ const Navbar = ({ setShowLogin }) => {
         {mobileMenuOpen && (
           <div className="md:hidden mt-4 bg-dark-light rounded-xl shadow-custom p-4">
             {/* User greeting in mobile menu */}
-            {user && (
+            {token && user && (
               <div className="py-2 px-4 mb-2 border-b border-gray-700">
                 <p className="font-medium text-white">
                   Hi, <span className="text-primary">{user.name}</span>

@@ -13,6 +13,7 @@ const ChatBox = () => {
   const [sending, setSending] = useState(false)
   const [selectedImage, setSelectedImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
+  const [loadedImages, setLoadedImages] = useState({}) // Track loaded images
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
 
@@ -93,6 +94,7 @@ const ChatBox = () => {
       }
     } catch (error) {
       console.error("Error sending message:", error)
+      alert("Failed to send message. Please try again.")
     } finally {
       setSending(false)
     }
@@ -106,8 +108,8 @@ const ChatBox = () => {
         return
       }
 
-      if (!file.type.match(/image\/(jpeg|jpg|png|gif)/)) {
-        alert("Only image files (JPEG, PNG, GIF) are allowed")
+      if (!file.type.match(/image\/(jpeg|jpg|png|gif|webp)/)) {
+        alert("Only image files (JPEG, PNG, GIF, WEBP) are allowed")
         return
       }
 
@@ -165,6 +167,16 @@ const ChatBox = () => {
 
   const messageGroups = groupMessagesByDate()
 
+  // Handle image load event
+  const handleImageLoad = (id) => {
+    setLoadedImages((prev) => ({ ...prev, [id]: true }))
+  }
+
+  // Handle image error event
+  const handleImageError = (id) => {
+    setLoadedImages((prev) => ({ ...prev, [id]: true })) // Mark as loaded to remove spinner
+  }
+
   return (
     <div className="flex flex-col h-[500px] bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
       {/* Chat header */}
@@ -212,12 +224,19 @@ const ChatBox = () => {
                     {message.content && <p className="mb-1">{message.content}</p>}
 
                     {message.image && (
-                      <div className="mt-2">
+                      <div className="relative mt-2">
+                        {!loadedImages[message._id] && (
+                          <div className="flex justify-center items-center py-4">
+                            <Loader className="animate-spin h-6 w-6 text-gray-500 dark:text-gray-400" />
+                          </div>
+                        )}
                         <img
-                          src={`${url}/images/chat/${message.image}`}
+                          src={`${url}/images/${message.image}`}
                           alt="Attached"
-                          className="max-w-full rounded-md cursor-pointer hover:opacity-90 transition-opacity"
-                          onClick={() => window.open(`${url}/images/chat/${message.image}`, "_blank")}
+                          className={`max-w-full rounded-md cursor-pointer hover:opacity-90 transition-opacity ${!loadedImages[message._id] ? "hidden" : ""}`}
+                          onClick={() => window.open(`${url}/images/${message.image}`, "_blank")}
+                          onLoad={() => handleImageLoad(message._id)}
+                          onError={() => handleImageError(message._id)}
                         />
                       </div>
                     )}
@@ -259,6 +278,7 @@ const ChatBox = () => {
             type="button"
             onClick={() => fileInputRef.current.click()}
             className="p-2 text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors"
+            disabled={!token}
           >
             <ImageIcon size={20} />
           </button>
@@ -266,7 +286,7 @@ const ChatBox = () => {
             type="file"
             ref={fileInputRef}
             onChange={handleImageChange}
-            accept="image/jpeg,image/png,image/gif"
+            accept="image/jpeg,image/png,image/gif,image/webp"
             className="hidden"
           />
 
