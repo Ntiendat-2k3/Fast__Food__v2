@@ -10,6 +10,7 @@ import voucherRouter from "./routes/voucherRoute.js"
 import commentRouter from "./routes/commentRoute.js"
 import notificationRouter from "./routes/notificationRoute.js"
 import feedbackRouter from "./routes/feedbackRoute.js"
+import messageRouter from "./routes/messageRoute.js"
 
 // app config
 const app = express()
@@ -32,6 +33,7 @@ app.use("/api/voucher", voucherRouter)
 app.use("/api/comment", commentRouter)
 app.use("/api/notification", notificationRouter)
 app.use("/api/feedback", feedbackRouter)
+app.use("/api/message", messageRouter)
 
 app.get("/", (req, res) => {
   res.send("API Working")

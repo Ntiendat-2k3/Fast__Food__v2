@@ -8,11 +8,11 @@ import { ShoppingCart, User, LogOut, Package, Menu, X, Sun, Moon, Bell } from "l
 import axios from "axios"
 
 const Navbar = ({ setShowLogin }) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { getTotalCartAmount, token, setToken, cartItems, url } = useContext(StoreContext)
+  const { getTotalCartAmount, token, setToken, cartItems, url, user } = useContext(StoreContext)
   const { darkMode, toggleDarkMode } = useTheme()
   const navigate = useNavigate()
   const location = useLocation()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -101,6 +101,7 @@ const Navbar = ({ setShowLogin }) => {
 
   const logout = () => {
     localStorage.removeItem("token")
+    localStorage.removeItem("user")
     setToken("")
     navigate("/")
   }
@@ -138,7 +139,7 @@ const Navbar = ({ setShowLogin }) => {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-white dark:bg-dark-light shadow-md py-2" : "bg-transparent dark:bg-transparent py-4"
+        scrolled ? "bg-dark-light shadow-md py-2" : "bg-dark/80 py-4"
       }`}
     >
       <div className="container mx-auto px-4 md:px-8">
@@ -161,7 +162,7 @@ const Navbar = ({ setShowLogin }) => {
                 <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
               </svg>
             </div>
-            <span className="text-xl font-bold text-dark dark:text-white">GreenEats</span>
+            <span className="text-xl font-bold text-white">GreenEats</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -169,9 +170,7 @@ const Navbar = ({ setShowLogin }) => {
             <Link
               to="/"
               className={`font-medium transition-colors ${
-                location.pathname === "/"
-                  ? "text-primary"
-                  : "text-dark dark:text-white hover:text-primary dark:hover:text-primary"
+                location.pathname === "/" ? "text-primary" : "text-white hover:text-primary"
               }`}
             >
               Trang chủ
@@ -179,9 +178,7 @@ const Navbar = ({ setShowLogin }) => {
             <Link
               to="/foods"
               className={`font-medium transition-colors ${
-                location.pathname === "/foods"
-                  ? "text-primary"
-                  : "text-dark dark:text-white hover:text-primary dark:hover:text-primary"
+                location.pathname === "/foods" ? "text-primary" : "text-white hover:text-primary"
               }`}
             >
               Thực đơn
@@ -189,19 +186,15 @@ const Navbar = ({ setShowLogin }) => {
             <Link
               to="/myorders"
               className={`font-medium transition-colors ${
-                location.pathname === "/myorders"
-                  ? "text-primary"
-                  : "text-dark dark:text-white hover:text-primary dark:hover:text-primary"
+                location.pathname === "/myorders" ? "text-primary" : "text-white hover:text-primary"
               }`}
             >
               Đơn hàng
             </Link>
             <Link
-              to="/#contact"
+              to="/contact"
               className={`font-medium transition-colors ${
-                location.hash === "#contact"
-                  ? "text-primary"
-                  : "text-dark dark:text-white hover:text-primary dark:hover:text-primary"
+                location.pathname === "/contact" ? "text-primary" : "text-white hover:text-primary"
               }`}
             >
               Liên hệ
@@ -210,10 +203,19 @@ const Navbar = ({ setShowLogin }) => {
 
           {/* Right Side Icons */}
           <div className="flex items-center space-x-4">
+            {/* User Greeting - Show when logged in */}
+            {user && (
+              <div className="hidden md:flex items-center mr-2">
+                <span className="text-white font-medium">
+                  Hi, <span className="text-primary">{user.name}</span>
+                </span>
+              </div>
+            )}
+
             {/* Theme Toggle */}
             <button
               onClick={toggleDarkMode}
-              className="p-2 text-dark dark:text-white hover:text-primary dark:hover:text-primary transition-colors"
+              className="p-2 text-white hover:text-primary transition-colors"
               aria-label={darkMode ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
             >
               {darkMode ? <Sun size={24} /> : <Moon size={24} />}
@@ -224,7 +226,7 @@ const Navbar = ({ setShowLogin }) => {
               <div className="notifications-dropdown relative">
                 <button
                   onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className="relative p-2 text-dark dark:text-white hover:text-primary dark:hover:text-primary transition-colors"
+                  className="relative p-2 text-white hover:text-primary transition-colors"
                   aria-expanded={notificationsOpen}
                   aria-haspopup="true"
                 >
@@ -236,24 +238,22 @@ const Navbar = ({ setShowLogin }) => {
                   )}
                 </button>
                 {notificationsOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-dark-light rounded-xl shadow-custom py-2 z-10 max-h-96 overflow-y-auto">
-                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                      <h3 className="font-medium text-dark dark:text-white">Thông báo</h3>
+                  <div className="absolute right-0 mt-2 w-80 bg-dark-light rounded-xl shadow-custom py-2 z-10 max-h-96 overflow-y-auto">
+                    <div className="px-4 py-2 border-b border-gray-700">
+                      <h3 className="font-medium text-white">Thông báo</h3>
                     </div>
                     {notifications.length > 0 ? (
                       <div>
                         {notifications.map((notification) => (
                           <div
                             key={notification._id}
-                            className={`px-4 py-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-dark cursor-pointer ${
-                              !notification.read ? "bg-blue-50 dark:bg-blue-900/10" : ""
+                            className={`px-4 py-3 border-b border-gray-700 hover:bg-dark cursor-pointer ${
+                              !notification.read ? "bg-blue-900/10" : ""
                             }`}
                             onClick={() => markAsRead(notification._id)}
                           >
                             <div className="flex items-center justify-between mb-1">
-                              <h4
-                                className={`font-medium ${!notification.read ? "text-primary" : "text-dark dark:text-white"}`}
-                              >
+                              <h4 className={`font-medium ${!notification.read ? "text-primary" : "text-white"}`}>
                                 {notification.title}
                               </h4>
                               <span
@@ -265,15 +265,13 @@ const Navbar = ({ setShowLogin }) => {
                                 {notification.type === "error" && "Lỗi"}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">{notification.message}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {formatDate(notification.createdAt)}
-                            </p>
+                            <p className="text-sm text-gray-300 mb-1">{notification.message}</p>
+                            <p className="text-xs text-gray-400">{formatDate(notification.createdAt)}</p>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                      <div className="px-4 py-6 text-center text-gray-400">
                         <Bell size={24} className="mx-auto mb-2 opacity-50" />
                         <p>Không có thông báo nào</p>
                       </div>
@@ -283,10 +281,7 @@ const Navbar = ({ setShowLogin }) => {
               </div>
             )}
 
-            <Link
-              to="/cart"
-              className="relative p-2 text-dark dark:text-white hover:text-primary dark:hover:text-primary transition-colors"
-            >
+            <Link to="/cart" className="relative p-2 text-white hover:text-primary transition-colors">
               <ShoppingCart size={24} />
               {totalItems > 0 && (
                 <span className="absolute -top-1 -right-1 bg-accent text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
@@ -306,17 +301,23 @@ const Navbar = ({ setShowLogin }) => {
               <div className="user-dropdown relative">
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="p-2 text-dark dark:text-white hover:text-primary dark:hover:text-primary transition-colors"
+                  className="p-2 text-white hover:text-primary transition-colors"
                   aria-expanded={dropdownOpen}
                   aria-haspopup="true"
                 >
                   <User size={24} />
                 </button>
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-light rounded-xl shadow-custom py-2 z-10">
+                  <div className="absolute right-0 mt-2 w-48 bg-dark-light rounded-xl shadow-custom py-2 z-10">
+                    {/* User name in dropdown */}
+                    <div className="px-4 py-2 border-b border-gray-700">
+                      <p className="font-medium text-white">
+                        Hi, <span className="text-primary">{user?.name}</span>
+                      </p>
+                    </div>
                     <Link
                       to="/myorders"
-                      className="block px-4 py-2 text-sm text-dark dark:text-white hover:bg-primary-light hover:text-dark flex items-center"
+                      className="block px-4 py-2 text-sm text-white hover:bg-dark hover:text-primary flex items-center"
                       onClick={() => setDropdownOpen(false)}
                     >
                       <Package size={16} className="mr-2" />
@@ -327,7 +328,7 @@ const Navbar = ({ setShowLogin }) => {
                         logout()
                         setDropdownOpen(false)
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm text-dark dark:text-white hover:bg-primary-light hover:text-dark flex items-center"
+                      className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-dark hover:text-primary flex items-center"
                     >
                       <LogOut size={16} className="mr-2" />
                       Đăng xuất
@@ -340,7 +341,7 @@ const Navbar = ({ setShowLogin }) => {
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-dark dark:text-white hover:text-primary dark:hover:text-primary transition-colors"
+              className="md:hidden p-2 text-white hover:text-primary transition-colors"
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -349,14 +350,20 @@ const Navbar = ({ setShowLogin }) => {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-4 bg-white dark:bg-dark-light rounded-xl shadow-custom p-4">
+          <div className="md:hidden mt-4 bg-dark-light rounded-xl shadow-custom p-4">
+            {/* User greeting in mobile menu */}
+            {user && (
+              <div className="py-2 px-4 mb-2 border-b border-gray-700">
+                <p className="font-medium text-white">
+                  Hi, <span className="text-primary">{user.name}</span>
+                </p>
+              </div>
+            )}
             <nav className="flex flex-col space-y-4">
               <Link
                 to="/"
                 className={`font-medium transition-colors ${
-                  location.pathname === "/"
-                    ? "text-primary"
-                    : "text-dark dark:text-white hover:text-primary dark:hover:text-primary"
+                  location.pathname === "/" ? "text-primary" : "text-white hover:text-primary"
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -365,9 +372,7 @@ const Navbar = ({ setShowLogin }) => {
               <Link
                 to="/foods"
                 className={`font-medium transition-colors ${
-                  location.pathname === "/foods"
-                    ? "text-primary"
-                    : "text-dark dark:text-white hover:text-primary dark:hover:text-primary"
+                  location.pathname === "/foods" ? "text-primary" : "text-white hover:text-primary"
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -376,20 +381,16 @@ const Navbar = ({ setShowLogin }) => {
               <Link
                 to="/myorders"
                 className={`font-medium transition-colors ${
-                  location.pathname === "/myorders"
-                    ? "text-primary"
-                    : "text-dark dark:text-white hover:text-primary dark:hover:text-primary"
+                  location.pathname === "/myorders" ? "text-primary" : "text-white hover:text-primary"
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Đơn hàng
               </Link>
               <Link
-                to="/#contact"
+                to="/contact"
                 className={`font-medium transition-colors ${
-                  location.hash === "#contact"
-                    ? "text-primary"
-                    : "text-dark dark:text-white hover:text-primary dark:hover:text-primary"
+                  location.pathname === "/contact" ? "text-primary" : "text-white hover:text-primary"
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >

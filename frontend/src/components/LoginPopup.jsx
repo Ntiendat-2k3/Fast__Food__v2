@@ -29,7 +29,7 @@ const LoginPopup = ({ setShowLogin }) => {
       setError("")
       console.log("Attempting login with:", data.email)
 
-      const response = await axios.post(url + "/api/user/login", {
+      const response = await axios.post(`${url}/api/user/login`, {
         email: data.email,
         password: data.password,
       })
@@ -53,7 +53,7 @@ const LoginPopup = ({ setShowLogin }) => {
 
           // Fetch user data from profile endpoint
           try {
-            const userResponse = await axios.get(url + "/api/user/profile", {
+            const userResponse = await axios.get(`${url}/api/user/profile`, {
               headers: { token: response.data.token },
             })
 
@@ -93,7 +93,7 @@ const LoginPopup = ({ setShowLogin }) => {
       setError("")
       console.log("Attempting registration with:", data)
 
-      const response = await axios.post(url + "/api/user/register", {
+      const response = await axios.post(`${url}/api/user/register`, {
         name: data.name,
         email: data.email,
         password: data.password,
@@ -118,7 +118,7 @@ const LoginPopup = ({ setShowLogin }) => {
 
           // Fetch user data from profile endpoint
           try {
-            const userResponse = await axios.get(url + "/api/user/profile", {
+            const userResponse = await axios.get(`${url}/api/user/profile`, {
               headers: { token: response.data.token },
             })
 

@@ -14,6 +14,7 @@ import Comments from "./pages/Comments/Comments"
 import { ThemeProvider } from "./context/ThemeContext"
 import Login from "./pages/Login/Login"
 import { useState, useEffect } from "react"
+import Chat from "./pages/Chat/Chat"
 
 const App = () => {
   const url = "http://localhost:4000"
@@ -117,6 +118,7 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/chat" element={<Chat />} />
             </Routes>
           </div>
         </main>

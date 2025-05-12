@@ -3,7 +3,19 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { useContext } from "react"
-import { ArrowRight, Star, Clock, Truck, ShoppingBag, ChevronRight, Heart, Award, MapPin } from "lucide-react"
+import {
+  ArrowRight,
+  Star,
+  Clock,
+  Truck,
+  ShoppingBag,
+  ChevronRight,
+  Heart,
+  MapPin,
+  Phone,
+  Mail,
+  Send,
+} from "lucide-react"
 import { motion } from "framer-motion"
 import { StoreContext } from "../../context/StoreContext"
 import { slugify } from "../../utils/slugify"
@@ -87,7 +99,7 @@ const Home = () => {
   ]
 
   return (
-    <div className="pt-16">
+    <div>
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80')] bg-cover bg-center opacity-20"></div>
@@ -442,96 +454,53 @@ const Home = () => {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-16 bg-white">
+      <section id="contact" className="py-16 bg-gray-100">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center">
-            <div className="md:w-1/2 mb-10 md:mb-0">
-              <h2 className="text-3xl font-bold mb-4">
-                <span className="text-gray-900">Liên hệ </span>
-                <span className="text-yellow-500">với chúng tôi</span>
-              </h2>
-              <p className="text-gray-600 mb-8 max-w-md">
-                Bạn có câu hỏi hoặc phản hồi? Chúng tôi rất muốn nghe từ bạn. Điền vào biểu mẫu và chúng tôi sẽ liên hệ
-                lại với bạn sớm nhất có thể.
-              </p>
-              <form className="space-y-4 max-w-md">
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Họ tên của bạn"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                  />
+          <h2 className="text-3xl font-bold text-center mb-12">Thông Tin Liên Hệ</h2>
+
+          <div className="max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white p-6 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow duration-300">
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MapPin className="w-8 h-8 text-yellow-500" />
                 </div>
-                <div>
-                  <input
-                    type="email"
-                    placeholder="Email của bạn"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <textarea
-                    placeholder="Tin nhắn của bạn"
-                    rows="4"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                  ></textarea>
-                </div>
-                <button
-                  type="submit"
-                  className="bg-gray-900 hover:bg-gray-800 text-white font-medium py-3 px-6 rounded-lg transition-colors"
-                >
-                  Gửi tin nhắn
-                </button>
-              </form>
-            </div>
-            <div className="md:w-1/2">
-              <div className="bg-gray-100 rounded-xl p-8 shadow-md">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex items-start">
-                    <div className="bg-yellow-400 rounded-full p-3 mr-4">
-                      <MapPin className="h-6 w-6 text-gray-900" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900 mb-1">Địa chỉ</h3>
-                      <p className="text-gray-600">123 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start">
-                    <div className="bg-yellow-400 rounded-full p-3 mr-4">
-                      <Clock className="h-6 w-6 text-gray-900" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900 mb-1">Giờ mở cửa</h3>
-                      <p className="text-gray-600">Thứ 2 - Chủ nhật: 8:00 - 22:00</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start">
-                    <div className="bg-yellow-400 rounded-full p-3 mr-4">
-                      <Award className="h-6 w-6 text-gray-900" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900 mb-1">Chất lượng</h3>
-                      <p className="text-gray-600">Đảm bảo thực phẩm tươi ngon mỗi ngày</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start">
-                    <div className="bg-yellow-400 rounded-full p-3 mr-4">
-                      <Truck className="h-6 w-6 text-gray-900" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900 mb-1">Giao hàng</h3>
-                      <p className="text-gray-600">Miễn phí giao hàng trong bán kính 5km</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-8">
-                  <img
-                    src="https://maps.googleapis.com/maps/api/staticmap?center=10.7758439,106.7017555&zoom=13&size=600x300&maptype=roadmap&markers=color:red%7C10.7758439,106.7017555&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8"
-                    alt="Map"
-                    className="w-full rounded-lg"
-                  />
-                </div>
+                <h3 className="text-xl font-semibold mb-2">Địa Chỉ</h3>
+                <p className="text-gray-600">123 Đường Nguyễn Văn Linh, Quận 7, TP. Hồ Chí Minh</p>
               </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow duration-300">
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Phone className="w-8 h-8 text-yellow-500" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Điện Thoại</h3>
+                <p className="text-gray-600">+84 123 456 789</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow duration-300">
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Mail className="w-8 h-8 text-yellow-500" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Email</h3>
+                <p className="text-gray-600">info@greeneats.com</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow duration-300">
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Clock className="w-8 h-8 text-yellow-500" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Giờ Mở Cửa</h3>
+                <p className="text-gray-600">Thứ 2 - Chủ Nhật: 8:00 - 22:00</p>
+              </div>
+            </div>
+
+            <div className="mt-12 text-center">
+              <Link
+                to="/contact"
+                className="bg-yellow-500 text-white px-8 py-3 rounded-lg hover:bg-yellow-600 transition duration-300 inline-flex items-center"
+              >
+                Chat Với Chúng Tôi
+                <Send className="ml-2 w-5 h-5" />
+              </Link>
             </div>
           </div>
         </div>

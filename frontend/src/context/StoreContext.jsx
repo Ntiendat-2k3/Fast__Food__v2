@@ -1,9 +1,18 @@
 "use client"
 
 import axios from "axios"
-import { createContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
 
 export const StoreContext = createContext(null)
+
+// Create a custom hook to use the StoreContext
+export const useStore = () => {
+  const context = useContext(StoreContext)
+  if (!context) {
+    throw new Error("useStore must be used within a StoreContextProvider")
+  }
+  return context
+}
 
 const StoreContextProvider = (props) => {
   const [cartItems, setCartItems] = useState({})
@@ -84,7 +93,7 @@ const StoreContextProvider = (props) => {
 
   const fetchUserData = async (token) => {
     try {
-      console.log("Fetching user data with token")
+      console.log("Fetching user data with token:", token)
       const response = await axios.get(`${url}/api/user/profile`, {
         headers: { token },
       })
@@ -114,7 +123,7 @@ const StoreContextProvider = (props) => {
 
         const storedToken = localStorage.getItem("token")
         if (storedToken) {
-          console.log("Found token in localStorage")
+          console.log("Found token in localStorage:", storedToken)
           setToken(storedToken)
 
           // Try to load user from localStorage first
@@ -126,6 +135,8 @@ const StoreContextProvider = (props) => {
               setUser(parsedUser)
             } catch (error) {
               console.error("Error parsing user data from localStorage:", error)
+              // If parsing fails, clear the invalid data
+              localStorage.removeItem("user")
             }
           }
 
@@ -134,8 +145,11 @@ const StoreContextProvider = (props) => {
 
           // If no user in localStorage or parsing failed, fetch from API
           if (!user) {
+            console.log("No user in state, fetching from API")
             await fetchUserData(storedToken)
           }
+        } else {
+          console.log("No token found in localStorage")
         }
       } catch (error) {
         console.error("Error in loadData:", error)

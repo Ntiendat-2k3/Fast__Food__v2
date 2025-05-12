@@ -79,6 +79,11 @@ const Sidebar = ({ onLogout }) => {
       name: "Hồ sơ",
       icon: <User size={20} />,
     },
+    {
+      path: "/chat",
+      name: "Tin nhắn",
+      icon: <MessageSquare size={20} />
+    }
   ]
 
   return (

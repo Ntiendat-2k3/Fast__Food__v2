@@ -84,3 +84,18 @@ body {
     min-width: 44px;
   }
 }
+
+/* Navbar styles */
+header {
+  background-color: #1e1e1e;
+}
+
+header a,
+header button:not(.bg-primary),
+header span:not(.text-primary):not(.bg-accent):not(.bg-red-500) {
+  color: white;
+}
+
+header .text-primary {
+  color: #ffdd00;
+}
