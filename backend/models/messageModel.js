@@ -30,6 +30,10 @@ const messageSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       default: null,
     },
+    isAutoResponse: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 )

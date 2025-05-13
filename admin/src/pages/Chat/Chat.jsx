@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import axios from "axios"
-import { Send, ImageIcon, Search, MoreVertical, X, Loader } from "lucide-react"
+import { Send, ImageIcon, Search, MoreVertical, X, Loader, ArrowDown } from "lucide-react"
 
 const Chat = () => {
   const [users, setUsers] = useState([])
@@ -16,6 +16,9 @@ const Chat = () => {
   const [galleryImages, setGalleryImages] = useState([])
   const [imagePreview, setImagePreview] = useState(null)
   const [loadedImages, setLoadedImages] = useState({}) // Track loaded images
+  const [isNearBottom, setIsNearBottom] = useState(true) // Track if user is near bottom
+  const [showScrollButton, setShowScrollButton] = useState(false) // Show scroll to bottom button
+  const [unreadCount, setUnreadCount] = useState(0) // Track number of unread messages
   const messagesContainerRef = useRef(null)
   const baseUrl = "http://localhost:4000" // Match the port in server.js
 
@@ -56,7 +59,21 @@ const Chat = () => {
         })
 
         if (response.data.success) {
-          setMessages(response.data.data)
+          // Store previous message count to determine if new messages arrived
+          const prevMessageCount = messages.length
+          const newMessages = response.data.data
+
+          setMessages(newMessages)
+
+          // Only auto-scroll if user is already near bottom or if this is a new message sent by admin
+          if (isNearBottom || (prevMessageCount < newMessages.length && newMessages[newMessages.length - 1]?.isAdmin)) {
+            scrollToBottom()
+          } else if (prevMessageCount < newMessages.length) {
+            // New message arrived but user has scrolled up
+            const newCount = newMessages.length - prevMessageCount
+            setUnreadCount((prev) => prev + newCount)
+            setShowScrollButton(true)
+          }
 
           // Extract images from messages for the gallery
           const images = response.data.data
@@ -80,18 +97,57 @@ const Chat = () => {
     const intervalId = setInterval(fetchMessages, 3000)
 
     return () => clearInterval(intervalId)
+  }, [selectedUser, isNearBottom, messages.length])
+
+  // Handle scroll events to determine if user is near bottom
+  const handleScroll = () => {
+    if (!messagesContainerRef.current) return
+
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current
+    // Consider "near bottom" if within 100px of the bottom
+    const bottom = scrollHeight - scrollTop - clientHeight < 100
+
+    setIsNearBottom(bottom)
+
+    if (bottom) {
+      // Reset unread count when scrolled to bottom
+      setUnreadCount(0)
+      setShowScrollButton(false)
+    } else {
+      setShowScrollButton(unreadCount > 0)
+    }
+  }
+
+  // Add scroll event listener
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (container) {
+      container.addEventListener("scroll", handleScroll)
+      return () => container.removeEventListener("scroll", handleScroll)
+    }
+  }, [unreadCount])
+
+  // Initial scroll to bottom when selecting a user or when component mounts
+  useEffect(() => {
+    if (selectedUser) {
+      scrollToBottom()
+      setUnreadCount(0) // Reset unread count when changing users
+    }
   }, [selectedUser])
 
-  useEffect(() => {
-    // Scroll to bottom when messages change
+  const scrollToBottom = () => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+      setShowScrollButton(false)
+      setUnreadCount(0) // Reset unread count when scrolling to bottom
     }
-  }, [messages])
+  }
 
   const handleUserSelect = (user) => {
     setSelectedUser(user)
     setShowGallery(false)
+    setIsNearBottom(true) // Reset scroll position when changing users
+    setUnreadCount(0) // Reset unread count when changing users
   }
 
   const handleImageUpload = (e) => {
@@ -169,6 +225,10 @@ const Chat = () => {
         setNewMessage("")
         setSelectedImage(null)
         setImagePreview(null)
+
+        // Always scroll to bottom after sending a message
+        setTimeout(scrollToBottom, 100)
+        setIsNearBottom(true)
       }
     } catch (error) {
       console.error("Error sending message:", error)
@@ -260,7 +320,7 @@ const Chat = () => {
                   </div>
                 </div>
 
-                <div className="flex-1 p-4 overflow-y-auto" ref={messagesContainerRef}>
+                <div className="flex-1 p-4 overflow-y-auto relative" ref={messagesContainerRef}>
                   {messages.length === 0 ? (
                     <div className="text-center text-gray-400 mt-8">
                       <p>Không có tin nhắn nào</p>
@@ -299,6 +359,22 @@ const Chat = () => {
                         </div>
                       </div>
                     ))
+                  )}
+
+                  {/* Scroll to bottom button with unread count */}
+                  {showScrollButton && (
+                    <button
+                      onClick={scrollToBottom}
+                      className="absolute bottom-4 right-4 bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center"
+                      title="Cuộn xuống tin nhắn mới nhất"
+                    >
+                      <ArrowDown size={20} />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                      )}
+                    </button>
                   )}
                 </div>
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useContext } from "react"
 import { StoreContext } from "../context/StoreContext"
-import { Send, ImageIcon, Loader, X } from "lucide-react"
+import { Send, ImageIcon, Loader, X, ArrowDown } from "lucide-react"
 import axios from "axios"
 
 const ChatBox = () => {
@@ -13,25 +13,46 @@ const ChatBox = () => {
   const [sending, setSending] = useState(false)
   const [selectedImage, setSelectedImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
-  const [loadedImages, setLoadedImages] = useState({}) // Track loaded images
+  const [loadedImages, setLoadedImages] = useState({})
+  const [isNearBottom, setIsNearBottom] = useState(true) // Track if user is near bottom
+  const [showScrollButton, setShowScrollButton] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0) // Track number of unread messages
   const messagesEndRef = useRef(null)
+  const messagesContainerRef = useRef(null)
   const fileInputRef = useRef(null)
 
-  // Fetch messages on component mount and periodically
   useEffect(() => {
     if (token) {
       fetchMessages()
 
-      // Set up polling to check for new messages every 5 seconds
       const intervalId = setInterval(fetchMessages, 5000)
       return () => clearInterval(intervalId)
     }
   }, [token])
 
-  // Scroll to bottom when messages change
+  const handleScroll = () => {
+    if (!messagesContainerRef.current) return
+
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current
+    const bottom = scrollHeight - scrollTop - clientHeight < 100
+
+    setIsNearBottom(bottom)
+
+    if (bottom) {
+      setUnreadCount(0)
+      setShowScrollButton(false)
+    } else {
+      setShowScrollButton(unreadCount > 0)
+    }
+  }
+
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    const container = messagesContainerRef.current
+    if (container) {
+      container.addEventListener("scroll", handleScroll)
+      return () => container.removeEventListener("scroll", handleScroll)
+    }
+  }, [unreadCount])
 
   const fetchMessages = async () => {
     if (!token) return
@@ -43,7 +64,18 @@ const ChatBox = () => {
       })
 
       if (response.data.success) {
-        setMessages(response.data.data)
+        const prevMessageCount = messages.length
+        const newMessages = response.data.data
+
+        setMessages(newMessages)
+
+        if (isNearBottom || (prevMessageCount < newMessages.length && !newMessages[newMessages.length - 1]?.isAdmin)) {
+          scrollToBottom()
+        } else if (prevMessageCount < newMessages.length) {
+          const newCount = newMessages.length - prevMessageCount
+          setUnreadCount((prev) => prev + newCount)
+          setShowScrollButton(true)
+        }
       }
     } catch (error) {
       console.error("Error fetching messages:", error)
@@ -51,6 +83,20 @@ const ChatBox = () => {
       setLoading(false)
     }
   }
+
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+      setShowScrollButton(false)
+      setUnreadCount(0)
+    }
+  }
+
+  useEffect(() => {
+    if (token && messages.length > 0) {
+      scrollToBottom()
+    }
+  }, [token])
 
   const handleSendMessage = async (e) => {
     e.preventDefault()
@@ -67,7 +113,6 @@ const ChatBox = () => {
     try {
       setSending(true)
 
-      // Create form data for multipart/form-data (for image upload)
       const formData = new FormData()
       formData.append("content", newMessage)
 
@@ -83,14 +128,19 @@ const ChatBox = () => {
       })
 
       if (response.data.success) {
-        // Add the new message to the messages array
-        setMessages([...messages, response.data.data])
+        const updatedMessages = [...messages, response.data.data]
+
+        if (response.data.autoResponse) {
+          updatedMessages.push(response.data.autoResponse)
+        }
+
+        setMessages(updatedMessages)
         setNewMessage("")
         setSelectedImage(null)
         setImagePreview(null)
 
-        // Fetch messages to get any new responses
-        setTimeout(fetchMessages, 1000)
+        setTimeout(scrollToBottom, 100)
+        setIsNearBottom(true)
       }
     } catch (error) {
       console.error("Error sending message:", error)
@@ -132,10 +182,6 @@ const ChatBox = () => {
     }
   }
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
-
   const formatTime = (dateString) => {
     const date = new Date(dateString)
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -150,7 +196,6 @@ const ChatBox = () => {
     })
   }
 
-  // Group messages by date
   const groupMessagesByDate = () => {
     const groups = {}
 
@@ -167,14 +212,12 @@ const ChatBox = () => {
 
   const messageGroups = groupMessagesByDate()
 
-  // Handle image load event
   const handleImageLoad = (id) => {
     setLoadedImages((prev) => ({ ...prev, [id]: true }))
   }
 
-  // Handle image error event
   const handleImageError = (id) => {
-    setLoadedImages((prev) => ({ ...prev, [id]: true })) // Mark as loaded to remove spinner
+    setLoadedImages((prev) => ({ ...prev, [id]: true }))
   }
 
   return (
@@ -186,7 +229,7 @@ const ChatBox = () => {
       </div>
 
       {/* Messages container */}
-      <div className="flex-1 p-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+      <div className="flex-1 p-4 overflow-y-auto bg-gray-50 dark:bg-gray-800 relative" ref={messagesContainerRef}>
         {loading && messages.length === 0 ? (
           <div className="flex justify-center items-center h-full">
             <Loader className="animate-spin h-8 w-8 text-primary" />
@@ -252,6 +295,23 @@ const ChatBox = () => {
             </div>
           ))
         )}
+
+        {/* Scroll to bottom button with unread count */}
+        {showScrollButton && (
+          <button
+            onClick={scrollToBottom}
+            className="absolute bottom-4 right-4 bg-primary text-dark p-2 rounded-full shadow-lg hover:bg-primary-dark transition-all flex items-center justify-center"
+            title="Cuộn xuống tin nhắn mới nhất"
+          >
+            <ArrowDown size={20} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 

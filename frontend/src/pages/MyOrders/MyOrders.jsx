@@ -127,7 +127,7 @@ const MyOrders = () => {
   }
 
   return (
-    <div className="bg-white dark:bg-dark-card rounded-xl shadow-lg overflow-hidden mt-20 mx-4 md:mx-auto max-w-6xl transition-colors duration-300">
+    <div className="bg-white dark:bg-dark-lighter rounded-xl shadow-lg overflow-hidden my-20 mx-4 md:mx-auto max-w-6xl transition-colors duration-300">
       <div className="p-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <h1 className="text-2xl font-bold text-dark dark:text-white mb-4 md:mb-0">Đơn hàng của tôi</h1>

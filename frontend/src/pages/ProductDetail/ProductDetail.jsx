@@ -219,7 +219,7 @@ const ProductDetail = () => {
         </nav>
 
         {/* Product Detail Section */}
-        <div className="bg-white dark:bg-dark-card rounded-xl overflow-hidden shadow-lg mb-12">
+        <div className="bg-white dark:bg-dark-light rounded-xl overflow-hidden shadow-lg mb-12 ">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 md:p-8">
             {/* Product Images */}
             <div>

@@ -7,22 +7,35 @@ import { fileURLToPath } from "url"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// Send a message
+// Auto-response message
+const AUTO_RESPONSE = "Bạn đợi một chút, sẽ có nhân viên phản hồi ạ. Cảm ơn bạn đã liên hệ với chúng tôi!"
+
+const hasAutoResponseBeenSent = async (userId) => {
+  try {
+    const autoResponse = await messageModel.findOne({
+      recipientId: userId,
+      isAdmin: true,
+      isAutoResponse: true,
+    })
+    return !!autoResponse
+  } catch (error) {
+    console.error("Error checking for auto-response:", error)
+    return false
+  }
+}
+
 const sendMessage = async (req, res) => {
   try {
     const { content, userId } = req.body
     const senderId = req.user._id
 
-    // Get user info
     const user = await userModel.findById(senderId)
     if (!user) {
       return res.json({ success: false, message: "User not found" })
     }
 
-    // Handle image upload if present
     let imagePath = null
     if (req.file) {
-      // Store the relative path to the image
       imagePath = `chat/${path.basename(req.file.path)}`
     }
 
@@ -38,10 +51,30 @@ const sendMessage = async (req, res) => {
 
     await newMessage.save()
 
+    let autoResponse = null
+    if (user.role !== "admin") {
+      const alreadySentAutoResponse = await hasAutoResponseBeenSent(senderId)
+
+      if (!alreadySentAutoResponse) {
+        autoResponse = new messageModel({
+          userId: senderId, // The user who will receive this message
+          userName: "Hệ thống", // System name
+          content: AUTO_RESPONSE,
+          isAdmin: true, // Auto-responses appear as admin messages
+          recipientId: senderId, // Explicitly set the recipient
+          read: false,
+          isAutoResponse: true, // Flag to identify auto-responses
+        })
+
+        await autoResponse.save()
+      }
+    }
+
     res.json({
       success: true,
       message: "Message sent successfully",
       data: newMessage,
+      autoResponse: autoResponse,
     })
   } catch (error) {
     console.error("Error sending message:", error)
@@ -49,12 +82,10 @@ const sendMessage = async (req, res) => {
   }
 }
 
-// Get messages for a user
 const getUserMessages = async (req, res) => {
   try {
     const userId = req.user._id
 
-    // Get all messages for this user or from admin to this user
     const messages = await messageModel
       .find({
         $or: [
@@ -93,32 +124,27 @@ const getAllMessages = async (req, res) => {
   }
 }
 
-// Get conversation with a specific user (admin only)
 const getUserConversation = async (req, res) => {
   try {
-    // Check if user is admin
     if (req.user.role !== "admin") {
       return res.json({ success: false, message: "Unauthorized" })
     }
 
     const { userId } = req.params
 
-    // Validate userId
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.json({ success: false, message: "Invalid user ID" })
     }
 
-    // Get all messages between admin and this user
     const messages = await messageModel
       .find({
         $or: [
-          { userId, isAdmin: false }, // Messages from this specific user
-          { recipientId: userId, isAdmin: true }, // Admin messages specifically for this user
+          { userId, isAdmin: false },
+          { recipientId: userId, isAdmin: true },
         ],
       })
       .sort({ createdAt: 1 })
 
-    // Mark messages as read
     await messageModel.updateMany({ userId, isAdmin: false, read: false }, { $set: { read: true } })
 
     res.json({ success: true, data: messages })
@@ -128,17 +154,14 @@ const getUserConversation = async (req, res) => {
   }
 }
 
-// Mark messages as read
 const markAsRead = async (req, res) => {
   try {
     const { messageId } = req.body
 
-    // Validate messageId
     if (!mongoose.Types.ObjectId.isValid(messageId)) {
       return res.json({ success: false, message: "Invalid message ID" })
     }
 
-    // Update message
     await messageModel.findByIdAndUpdate(messageId, { read: true })
 
     res.json({ success: true, message: "Message marked as read" })

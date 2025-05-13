@@ -173,7 +173,7 @@ const Sidebar = ({ onLogout }) => {
               className="flex items-center px-4 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
             >
               <LogOut size={20} />
-              <span className="ml-3">Đăng xuất</span>
+              {/* <span className="ml-3">Đăng xuất</span> */}
             </button>
           </div>
         </div>

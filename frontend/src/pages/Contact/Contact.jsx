@@ -101,7 +101,7 @@ const Contact = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Contact Information */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="bg-white rounded-lg shadow-lg p-6 dark:bg-dark-lighter">
           <h2 className="text-2xl font-semibold mb-6">Thông Tin Liên Hệ</h2>
 
           <div className="space-y-4">
@@ -109,7 +109,7 @@ const Contact = () => {
               <MapPin className="w-5 h-5 text-yellow-500 mt-1 mr-3" />
               <div>
                 <h3 className="font-medium">Địa Chỉ</h3>
-                <p className="text-gray-600">123 Đường Nguyễn Văn Linh, Quận 7, TP. Hồ Chí Minh</p>
+                <p className="text-gray-600 dark:text-gray-400">123 Đường Nguyễn Văn Linh, Quận 7, TP. Hồ Chí Minh</p>
               </div>
             </div>
 
@@ -117,7 +117,7 @@ const Contact = () => {
               <Phone className="w-5 h-5 text-yellow-500 mt-1 mr-3" />
               <div>
                 <h3 className="font-medium">Điện Thoại</h3>
-                <p className="text-gray-600">+84 123 456 789</p>
+                <p className="text-gray-600 dark:text-gray-400">+84 123 456 789</p>
               </div>
             </div>
 
@@ -125,7 +125,7 @@ const Contact = () => {
               <Mail className="w-5 h-5 text-yellow-500 mt-1 mr-3" />
               <div>
                 <h3 className="font-medium">Email</h3>
-                <p className="text-gray-600">info@greeneats.com</p>
+                <p className="text-gray-600 dark:text-gray-400">info@greeneats.com</p>
               </div>
             </div>
 
@@ -133,7 +133,7 @@ const Contact = () => {
               <Clock className="w-5 h-5 text-yellow-500 mt-1 mr-3" />
               <div>
                 <h3 className="font-medium">Giờ Mở Cửa</h3>
-                <p className="text-gray-600">Thứ 2 - Chủ Nhật: 8:00 - 22:00</p>
+                <p className="text-gray-600 dark:text-gray-400">Thứ 2 - Chủ Nhật: 8:00 - 22:00</p>
               </div>
             </div>
           </div>
@@ -155,7 +155,7 @@ const Contact = () => {
         </div>
 
         {/* Chat Section */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-[600px]">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-[600px] dark:bg-dark-lighter">
           <div className="bg-yellow-500 text-white p-4">
             <h2 className="text-xl font-semibold">Chat Với Chúng Tôi</h2>
             <p className="text-sm">Chúng tôi sẽ phản hồi trong thời gian sớm nhất</p>

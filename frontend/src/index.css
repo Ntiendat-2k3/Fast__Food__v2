@@ -14,6 +14,15 @@ body {
   }
 }
 
+input,
+textarea {
+  outline: none;
+}
+
+textarea {
+  resize: none;
+}
+
 /* Smooth transitions for dark mode */
 .dark {
   color-scheme: dark;
