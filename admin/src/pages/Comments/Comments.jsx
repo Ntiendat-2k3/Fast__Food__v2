@@ -762,7 +762,7 @@ const Comments = ({ url }) => {
         {/* Comments Tab */}
         {activeTab === "comments" && (
           <>
-            <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+            <div className="flex flex-col md:flex-row justify-between gap-3 mb-6">
               {/* Search Bar */}
               <div className="relative flex-1">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -773,7 +773,7 @@ const Comments = ({ url }) => {
                   placeholder="Tìm kiếm theo tên người dùng, nội dung hoặc sản phẩm..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2.5 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 
@@ -787,7 +787,7 @@ const Comments = ({ url }) => {
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2.5 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="all">Tất cả danh mục</option>
                     {categories.map((category) => (
@@ -806,7 +806,7 @@ const Comments = ({ url }) => {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2.5 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="all">Tất cả trạng thái</option>
                     <option value="approved">Đã duyệt</option>
@@ -817,10 +817,10 @@ const Comments = ({ url }) => {
                 {/* Refresh Button */}
                 <button
                   onClick={fetchComments}
-                  className="p-3 bg-gray-100 dark:bg-dark-lighter rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-dark transition-colors"
+                  className="p-2.5 bg-gray-100 dark:bg-dark-lighter rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-dark transition-colors w-full sm:w-auto"
                   title="Refresh"
                 >
-                  <RefreshCw size={20} />
+                  <RefreshCw size={20} className="mx-auto sm:mx-0" />
                 </button>
               </div>
             </div>
@@ -869,79 +869,79 @@ const Comments = ({ url }) => {
                       comment.isApproved
                         ? "border-green-200 dark:border-green-900"
                         : "border-yellow-200 dark:border-yellow-900"
-                    } p-5`}
+                    } p-4`}
                   >
-                    <div className="flex flex-col md:flex-row justify-between mb-4">
-                      <div className="flex items-center mb-4 md:mb-0">
+                    <div className="flex flex-col sm:flex-row justify-between mb-4">
+                      <div className="flex items-center mb-3 sm:mb-0">
                         <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
+                          className={`w-9 h-9 rounded-full flex items-center justify-center mr-3 ${
                             comment.isApproved
                               ? "bg-green-100 dark:bg-green-900/30 text-green-500"
                               : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-500"
                           }`}
                         >
-                          {comment.isApproved ? <Check size={20} /> : <X size={20} />}
+                          {comment.isApproved ? <Check size={18} /> : <X size={18} />}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-800 dark:text-white">{comment.userName}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{formatDate(comment.createdAt)}</p>
+                          <p className="font-medium text-gray-800 dark:text-white text-sm">{comment.userName}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(comment.createdAt)}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
                         {!comment.isApproved && (
                           <button
                             onClick={() => handleStatusChange(comment._id, true)}
-                            className="p-2 bg-green-100 text-green-500 rounded-full hover:bg-green-200 transition-colors"
+                            className="p-1.5 bg-green-100 text-green-500 rounded-full hover:bg-green-200 transition-colors"
                             title="Duyệt đánh giá"
                           >
-                            <Check size={18} />
+                            <Check size={16} />
                           </button>
                         )}
                         {comment.isApproved && (
                           <button
                             onClick={() => handleStatusChange(comment._id, false)}
-                            className="p-2 bg-yellow-100 text-yellow-500 rounded-full hover:bg-yellow-200 transition-colors"
+                            className="p-1.5 bg-yellow-100 text-yellow-500 rounded-full hover:bg-yellow-200 transition-colors"
                             title="Hủy duyệt"
                           >
-                            <X size={18} />
+                            <X size={16} />
                           </button>
                         )}
                         <button
                           onClick={() => handleDeleteClick(comment._id)}
-                          className="p-2 bg-red-100 text-red-500 rounded-full hover:bg-red-200 transition-colors"
+                          className="p-1.5 bg-red-100 text-red-500 rounded-full hover:bg-red-200 transition-colors"
                           title="Xóa đánh giá"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </div>
 
-                    <div className="bg-gray-50 dark:bg-dark-lighter rounded-lg p-4">
+                    <div className="bg-gray-50 dark:bg-dark-lighter rounded-lg p-3">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                         <div className="flex mr-2">
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              size={16}
+                              size={14}
                               className={i < comment.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
                             />
                           ))}
                         </div>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                           Đánh giá cho: {getFoodName(comment.foodId)}
                         </span>
-                        <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
+                        <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
                           {getFoodCategory(comment.foodId)}
                         </span>
                       </div>
-                      <p className="text-gray-700 dark:text-gray-300">{comment.comment}</p>
+                      <p className="text-gray-700 dark:text-gray-300 text-sm">{comment.comment}</p>
 
                       {/* Admin Reply Section */}
                       {comment.adminReply && comment.adminReply.message && replyForm.commentId !== comment._id ? (
-                        <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
+                        <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 p-2.5 rounded-lg border border-blue-100 dark:border-blue-800">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center text-sm font-medium text-blue-700 dark:text-blue-300 mb-1">
-                              <Reply size={14} className="mr-1" />
+                            <div className="flex items-center text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
+                              <Reply size={12} className="mr-1" />
                               Phản hồi của quản trị viên:
                             </div>
                             <button
@@ -951,10 +951,10 @@ const Comments = ({ url }) => {
                               className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                               title="Chỉnh sửa phản hồi"
                             >
-                              <Edit size={14} />
+                              <Edit size={12} />
                             </button>
                           </div>
-                          <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-line">
+                          <p className="text-gray-700 dark:text-gray-300 text-xs whitespace-pre-line">
                             {comment.adminReply.message}
                           </p>
                           {comment.adminReply.createdAt && (
@@ -965,15 +965,15 @@ const Comments = ({ url }) => {
                         </div>
                       ) : (
                         <div className="mt-3">
-                          <div className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <Reply size={14} className="mr-1" />
+                          <div className="flex items-center text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                            <Reply size={12} className="mr-1" />
                             {replyForm.commentId === comment._id && comment.adminReply && comment.adminReply.message
                               ? "Chỉnh sửa phản hồi:"
                               : "Thêm phản hồi:"}
                           </div>
                           <textarea
                             placeholder="Nhập phản hồi của bạn..."
-                            rows={3}
+                            rows={2}
                             value={replyForm.commentId === comment._id ? replyForm.message : ""}
                             onChange={(e) => setReplyForm({ commentId: comment._id, message: e.target.value })}
                             onClick={() => {
@@ -984,7 +984,7 @@ const Comments = ({ url }) => {
                                 })
                               }
                             }}
-                            className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                            className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary text-xs"
                           />
                           <div className="flex justify-end mt-2 gap-2">
                             {replyForm.commentId === comment._id &&
@@ -992,7 +992,7 @@ const Comments = ({ url }) => {
                               comment.adminReply.message && (
                                 <button
                                   onClick={() => setReplyForm({ commentId: null, message: "" })}
-                                  className="px-3 py-1 rounded-lg text-sm flex items-center bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                                  className="px-2.5 py-1 rounded-lg text-xs flex items-center bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                                 >
                                   Hủy
                                 </button>
@@ -1000,13 +1000,13 @@ const Comments = ({ url }) => {
                             <button
                               onClick={handleReplyToComment}
                               disabled={!replyForm.message || replyForm.commentId !== comment._id}
-                              className={`px-3 py-1 rounded-lg text-sm flex items-center ${
+                              className={`px-2.5 py-1 rounded-lg text-xs flex items-center ${
                                 !replyForm.message || replyForm.commentId !== comment._id
                                   ? "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
                                   : "bg-primary text-white hover:bg-primary-dark"
                               }`}
                             >
-                              <Send size={14} className="mr-1" />
+                              <Send size={12} className="mr-1" />
                               {replyForm.commentId === comment._id && comment.adminReply && comment.adminReply.message
                                 ? "Cập nhật"
                                 : "Gửi phản hồi"}
@@ -1218,8 +1218,8 @@ const Comments = ({ url }) => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Block User Form */}
               <div className="lg:col-span-1">
-                <div className="bg-white dark:bg-dark-lighter rounded-xl shadow-sm p-6">
-                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 flex items-center">
+                <div className="bg-white dark:bg-dark-lighter rounded-xl shadow-sm p-4 sm:p-6">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white mb-4 sm:mb-6 flex items-center">
                     <UserX className="mr-2" size={20} />
                     Chặn người dùng
                   </h2>
@@ -1236,7 +1236,7 @@ const Comments = ({ url }) => {
                         id="block-user"
                         value={blockUserForm.userId}
                         onChange={handleUserSelect}
-                        className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                       >
                         <option value="">-- Chọn người dùng --</option>
                         {users.map((user) => (
@@ -1246,7 +1246,7 @@ const Comments = ({ url }) => {
                         ))}
                       </select>
                       {blockUserForm.userId && (
-                        <p className="mt-1 text-sm text-green-600">
+                        <p className="mt-1 text-xs text-green-600">
                           Đã chọn:{" "}
                           {users.find((u) => u._id === blockUserForm.userId)?.name || "Người dùng không xác định"}
                         </p>
@@ -1265,8 +1265,8 @@ const Comments = ({ url }) => {
                         value={blockUserForm.reason}
                         onChange={(e) => setBlockUserForm({ ...blockUserForm, reason: e.target.value })}
                         placeholder="Nhập lý do chặn người dùng"
-                        rows={4}
-                        className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                        rows={3}
+                        className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2 px-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                       />
                     </div>
 
@@ -1274,7 +1274,7 @@ const Comments = ({ url }) => {
                       <button
                         onClick={handleBlockUser}
                         disabled={!blockUserForm.userId || !blockUserForm.reason}
-                        className={`w-full px-4 py-2 rounded-lg flex items-center justify-center ${
+                        className={`w-full px-4 py-2 rounded-lg flex items-center justify-center text-sm ${
                           !blockUserForm.userId || !blockUserForm.reason
                             ? "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
                             : "bg-red-600 text-white hover:bg-red-700"
@@ -1290,8 +1290,8 @@ const Comments = ({ url }) => {
 
               {/* Blacklist Table */}
               <div className="lg:col-span-2">
-                <div className="bg-white dark:bg-dark-lighter rounded-xl shadow-sm p-6">
-                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 flex items-center">
+                <div className="bg-white dark:bg-dark-lighter rounded-xl shadow-sm p-4 sm:p-6">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white mb-4 sm:mb-6 flex items-center">
                     <UserX className="mr-2" size={20} />
                     Danh sách người dùng bị chặn
                   </h2>
@@ -1308,25 +1308,25 @@ const Comments = ({ url }) => {
                             <tr>
                               <th
                                 scope="col"
-                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                                className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
                               >
                                 Người dùng
                               </th>
                               <th
                                 scope="col"
-                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                                className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell"
                               >
                                 Lý do
                               </th>
                               <th
                                 scope="col"
-                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                                className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell"
                               >
                                 Ngày chặn
                               </th>
                               <th
                                 scope="col"
-                                className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                                className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
                               >
                                 Thao tác
                               </th>
@@ -1335,28 +1335,32 @@ const Comments = ({ url }) => {
                           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             {currentBlacklist.map((user) => (
                               <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-3 sm:px-6 py-3 whitespace-nowrap">
                                   <div className="flex items-center">
-                                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                                    <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
                                       <span className="text-gray-700 dark:text-gray-200 font-medium">
                                         {user.userName.charAt(0).toUpperCase()}
                                       </span>
                                     </div>
-                                    <div className="ml-4">
+                                    <div className="ml-3">
                                       <div className="text-sm font-medium text-gray-900 dark:text-white">
                                         {user.userName}
                                       </div>
-                                      <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
+                                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px] sm:max-w-none">
+                                        {user.email}
+                                      </div>
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4">
-                                  <div className="text-sm text-gray-900 dark:text-white">{user.reason}</div>
+                                <td className="px-3 sm:px-6 py-3 hidden sm:table-cell">
+                                  <div className="text-xs sm:text-sm text-gray-900 dark:text-white line-clamp-2">
+                                    {user.reason}
+                                  </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                <td className="px-3 sm:px-6 py-3 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
                                   {formatDate(user.blockedAt)}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td className="px-3 sm:px-6 py-3 whitespace-nowrap text-right text-xs sm:text-sm font-medium">
                                   <button
                                     onClick={() => handleUnblockUser(user._id)}
                                     className="text-primary hover:text-primary-dark"

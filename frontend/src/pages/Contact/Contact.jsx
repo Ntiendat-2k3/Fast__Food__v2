@@ -101,12 +101,12 @@ const Contact = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Contact Information */}
-        <div className="bg-white rounded-lg shadow-lg p-6 dark:bg-dark-lighter">
-          <h2 className="text-2xl font-semibold mb-6">Thông Tin Liên Hệ</h2>
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 dark:bg-dark-lighter">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-6">Thông Tin Liên Hệ</h2>
 
           <div className="space-y-4">
             <div className="flex items-start">
-              <MapPin className="w-5 h-5 text-yellow-500 mt-1 mr-3" />
+              <MapPin className="w-5 h-5 text-yellow-500 mt-1 mr-3 flex-shrink-0" />
               <div>
                 <h3 className="font-medium">Địa Chỉ</h3>
                 <p className="text-gray-600 dark:text-gray-400">123 Đường Nguyễn Văn Linh, Quận 7, TP. Hồ Chí Minh</p>
@@ -114,7 +114,7 @@ const Contact = () => {
             </div>
 
             <div className="flex items-start">
-              <Phone className="w-5 h-5 text-yellow-500 mt-1 mr-3" />
+              <Phone className="w-5 h-5 text-yellow-500 mt-1 mr-3 flex-shrink-0" />
               <div>
                 <h3 className="font-medium">Điện Thoại</h3>
                 <p className="text-gray-600 dark:text-gray-400">+84 123 456 789</p>
@@ -122,7 +122,7 @@ const Contact = () => {
             </div>
 
             <div className="flex items-start">
-              <Mail className="w-5 h-5 text-yellow-500 mt-1 mr-3" />
+              <Mail className="w-5 h-5 text-yellow-500 mt-1 mr-3 flex-shrink-0" />
               <div>
                 <h3 className="font-medium">Email</h3>
                 <p className="text-gray-600 dark:text-gray-400">info@greeneats.com</p>
@@ -130,7 +130,7 @@ const Contact = () => {
             </div>
 
             <div className="flex items-start">
-              <Clock className="w-5 h-5 text-yellow-500 mt-1 mr-3" />
+              <Clock className="w-5 h-5 text-yellow-500 mt-1 mr-3 flex-shrink-0" />
               <div>
                 <h3 className="font-medium">Giờ Mở Cửa</h3>
                 <p className="text-gray-600 dark:text-gray-400">Thứ 2 - Chủ Nhật: 8:00 - 22:00</p>
@@ -140,7 +140,7 @@ const Contact = () => {
 
           <div className="mt-8">
             <h3 className="text-xl font-semibold mb-4">Bản Đồ</h3>
-            <div className="w-full h-64 bg-gray-200 rounded-lg overflow-hidden">
+            <div className="w-full h-48 sm:h-64 bg-gray-200 rounded-lg overflow-hidden">
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3920.0381286064193!2d106.69908937469275!3d10.7287758896639!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f7b7ed82f1d%3A0xd0c5bbf53a4b9502!2zMTIzIMSQxrDhu51uZyBOZ3V54buFbiBWxINuIExpbmgsIFTDom4gUGjDuiwgUXXhuq1uIDcsIFRow6BuaCBwaOG7kSBI4buTIENow60gTWluaCwgVmnhu4d0IE5hbQ!5e0!3m2!1svi!2s!4v1715512027!5m2!1svi!2s"
                 width="100%"
@@ -155,7 +155,7 @@ const Contact = () => {
         </div>
 
         {/* Chat Section */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-[600px] dark:bg-dark-lighter">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-[500px] sm:h-[600px] dark:bg-dark-lighter">
           <div className="bg-yellow-500 text-white p-4">
             <h2 className="text-xl font-semibold">Chat Với Chúng Tôi</h2>
             <p className="text-sm">Chúng tôi sẽ phản hồi trong thời gian sớm nhất</p>
@@ -163,7 +163,7 @@ const Contact = () => {
 
           {user ? (
             <>
-              <div className="flex-1 p-4 overflow-y-auto" ref={messagesContainerRef}>
+              <div className="flex-1 p-4 overflow-y-auto scrollbar-hide" ref={messagesContainerRef}>
                 {messages.length === 0 ? (
                   <div className="text-center text-gray-500 mt-8">
                     <p>Bắt đầu cuộc trò chuyện với chúng tôi</p>
@@ -175,7 +175,7 @@ const Contact = () => {
                       className={`mb-4 flex ${msg.isAdmin ? "justify-start" : "justify-end"}`}
                     >
                       <div
-                        className={`max-w-[70%] p-3 rounded-lg ${
+                        className={`max-w-[85%] sm:max-w-[70%] p-3 rounded-lg ${
                           msg.isAdmin ? "bg-gray-200 text-gray-800" : "bg-yellow-500 text-white"
                         }`}
                       >
@@ -187,7 +187,7 @@ const Contact = () => {
                             style={{ maxHeight: "200px" }}
                           />
                         )}
-                        <p>{msg.content}</p>
+                        <p className="break-words">{msg.content}</p>
                         <div className={`text-xs mt-1 ${msg.isAdmin ? "text-gray-500" : "text-yellow-100"}`}>
                           {new Date(msg.createdAt).toLocaleTimeString()}
                         </div>
@@ -225,7 +225,9 @@ const Contact = () => {
                     <Send size={20} />
                   </button>
                 </form>
-                {selectedImage && <div className="mt-2 text-sm text-gray-600">Đã chọn: {selectedImage.name}</div>}
+                {selectedImage && (
+                  <div className="mt-2 text-sm text-gray-600 truncate">Đã chọn: {selectedImage.name}</div>
+                )}
               </div>
             </>
           ) : (

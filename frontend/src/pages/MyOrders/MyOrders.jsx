@@ -184,7 +184,7 @@ const MyOrders = () => {
                       <p className="text-gray-500 dark:text-gray-400 text-xs">{formatDate(order.date)}</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     <span
                       className={`px-2.5 py-1 rounded-full text-xs font-medium flex items-center ${getStatusColor(order.status)}`}
                     >
@@ -205,7 +205,7 @@ const MyOrders = () => {
                     {/* Order Items */}
                     <div className="md:col-span-2">
                       <h3 className="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2 font-medium">Sản phẩm</h3>
-                      <div className="space-y-2 max-h-32 overflow-y-auto pr-2">
+                      <div className="space-y-2 max-h-32 overflow-y-auto pr-2 scrollbar-hide">
                         {order.items.map((item, idx) => (
                           <div key={idx} className="flex justify-between text-sm">
                             <div className="flex items-center">
@@ -216,7 +216,7 @@ const MyOrders = () => {
                                   className="w-full h-full object-cover"
                                 />
                               </div>
-                              <span className="text-dark dark:text-white truncate max-w-[150px]">
+                              <span className="text-dark dark:text-white truncate max-w-[120px] sm:max-w-[150px]">
                                 {item.name} <span className="text-gray-500 dark:text-gray-400">x{item.quantity}</span>
                               </span>
                             </div>
@@ -242,7 +242,7 @@ const MyOrders = () => {
                         </p>
                         <p className="flex flex-col">
                           <span className="text-gray-500 dark:text-gray-400">Địa chỉ:</span>
-                          <span className="text-dark dark:text-white text-right text-xs mt-1">
+                          <span className="text-dark dark:text-white text-right text-xs mt-1 break-words">
                             {order.address.street}
                           </span>
                         </p>

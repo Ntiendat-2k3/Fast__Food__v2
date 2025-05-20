@@ -228,7 +228,7 @@ const Orders = ({ url }) => {
       <div className="bg-white dark:bg-dark-light rounded-2xl shadow-custom p-6 mb-8">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Quản lý đơn hàng</h1>
 
-        <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+        <div className="flex flex-col md:flex-row justify-between gap-3 mb-6">
           {/* Search Bar */}
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -245,7 +245,7 @@ const Orders = ({ url }) => {
 
           {/* Status Filter */}
           <div className="flex items-center space-x-2">
-            <div className="relative">
+            <div className="relative flex-grow">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Filter className="h-4 w-4 text-gray-400" />
               </div>
@@ -263,7 +263,7 @@ const Orders = ({ url }) => {
             </div>
             <button
               onClick={fetchAllOrders}
-              className="p-2 bg-gray-100 dark:bg-dark-lighter rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-dark transition-colors"
+              className="p-2 bg-gray-100 dark:bg-dark-lighter rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-dark transition-colors flex-shrink-0"
               title="Refresh"
             >
               <RefreshCw size={18} />
@@ -283,26 +283,26 @@ const Orders = ({ url }) => {
                 className="bg-white dark:bg-dark rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-dark-lighter"
               >
                 {/* Order Header */}
-                <div className="bg-gray-50 dark:bg-dark-lighter p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-200 dark:border-dark-lighter">
-                  <div className="flex items-center mb-2 sm:mb-0">
-                    <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center mr-3">
+                <div className="bg-gray-50 dark:bg-dark-lighter p-3 sm:p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-200 dark:border-dark-lighter">
+                  <div className="flex items-center mb-2 sm:mb-0 w-full sm:w-auto">
+                    <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                       <Package size={16} className="text-primary" />
                     </div>
-                    <div>
-                      <div className="flex items-center">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center flex-wrap gap-1">
                         <p className="text-dark dark:text-white font-medium text-sm">#{order._id.slice(-6)}</p>
-                        <span className="mx-2 text-gray-400">•</span>
+                        <span className="mx-1 text-gray-400 hidden sm:inline">•</span>
                         <div className="flex items-center text-gray-500 dark:text-gray-400 text-xs">
-                          <Calendar size={12} className="mr-1" />
+                          <Calendar size={12} className="mr-1 flex-shrink-0" />
                           {formatDate(order.date)}
                         </div>
                       </div>
-                      <p className="text-gray-600 dark:text-gray-300 text-sm">
+                      <p className="text-gray-600 dark:text-gray-300 text-sm truncate">
                         {order.address.name} • {order.address.phone}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
                     <select
                       onChange={(event) => statusHandler(event, order._id)}
                       value={order.status}
@@ -314,13 +314,13 @@ const Orders = ({ url }) => {
                       <option value="Đã giao">Đã giao</option>
                     </select>
                     <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium flex items-center ${getStatusColor(order.status)}`}
+                      className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${getStatusColor(order.status)}`}
                     >
                       {getStatusIcon(order.status)}
                       <span className="ml-1">{order.status}</span>
                     </span>
                     <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(order.paymentStatus)}`}
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(order.paymentStatus)}`}
                     >
                       {order.paymentStatus || "Chưa thanh toán"}
                     </span>
@@ -328,15 +328,15 @@ const Orders = ({ url }) => {
                 </div>
 
                 {/* Order Content */}
-                <div className="p-4">
+                <div className="p-3 sm:p-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Order Items */}
                     <div className="md:col-span-2">
                       <h3 className="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2 font-medium">Sản phẩm</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-2">
+                      <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto pr-2 scrollbar-thin">
                         {order.items.map((item, idx) => (
                           <div key={idx} className="flex justify-between text-sm">
-                            <div className="flex items-center">
+                            <div className="flex items-center min-w-0">
                               <div className="w-8 h-8 bg-gray-100 dark:bg-dark-lighter rounded overflow-hidden mr-2 flex-shrink-0">
                                 <img
                                   src={url + "/images/" + item.image || "/placeholder.svg"}
@@ -344,11 +344,11 @@ const Orders = ({ url }) => {
                                   className="w-full h-full object-cover"
                                 />
                               </div>
-                              <span className="text-dark dark:text-white truncate max-w-[150px]">
+                              <span className="text-dark dark:text-white truncate">
                                 {item.name} <span className="text-gray-500 dark:text-gray-400">x{item.quantity}</span>
                               </span>
                             </div>
-                            <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                            <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap ml-2">
                               {(item.price * item.quantity).toLocaleString("vi-VN")} đ
                             </span>
                           </div>
@@ -357,12 +357,14 @@ const Orders = ({ url }) => {
                     </div>
 
                     {/* Order Info */}
-                    <div className="border-t md:border-t-0 md:border-l border-gray-200 dark:border-dark-lighter pt-4 md:pt-0 md:pl-4">
+                    <div className="border-t md:border-t-0 md:border-l border-gray-200 dark:border-dark-lighter pt-3 md:pt-0 md:pl-4 mt-2 md:mt-0">
                       <h3 className="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2 font-medium">Thông tin</h3>
                       <div className="space-y-1 text-sm">
-                        <p className="flex justify-between">
+                        <p className="flex justify-between items-start">
                           <span className="text-gray-500 dark:text-gray-400">Địa chỉ:</span>
-                          <span className="text-dark dark:text-white text-right text-xs">{order.address.street}</span>
+                          <span className="text-dark dark:text-white text-right text-xs max-w-[200px] break-words">
+                            {order.address.street}
+                          </span>
                         </p>
                         <div className="flex items-center justify-between pt-1">
                           <div className="flex items-center">

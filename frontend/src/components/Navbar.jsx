@@ -351,7 +351,7 @@ const Navbar = ({ setShowLogin }) => {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-4 bg-dark-light rounded-xl shadow-custom p-4">
+          <div className="md:hidden mt-4 bg-dark-light rounded-xl shadow-custom p-4 max-h-[calc(100vh-80px)] overflow-y-auto">
             {/* User greeting in mobile menu */}
             {token && user && (
               <div className="py-2 px-4 mb-2 border-b border-gray-700">
@@ -363,8 +363,10 @@ const Navbar = ({ setShowLogin }) => {
             <nav className="flex flex-col space-y-4">
               <Link
                 to="/"
-                className={`font-medium transition-colors ${
-                  location.pathname === "/" ? "text-primary" : "text-white hover:text-primary"
+                className={`font-medium transition-colors py-2 px-4 rounded-lg ${
+                  location.pathname === "/"
+                    ? "text-primary bg-dark-lighter"
+                    : "text-white hover:text-primary hover:bg-dark-lighter"
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -372,8 +374,10 @@ const Navbar = ({ setShowLogin }) => {
               </Link>
               <Link
                 to="/foods"
-                className={`font-medium transition-colors ${
-                  location.pathname === "/foods" ? "text-primary" : "text-white hover:text-primary"
+                className={`font-medium transition-colors py-2 px-4 rounded-lg ${
+                  location.pathname === "/foods"
+                    ? "text-primary bg-dark-lighter"
+                    : "text-white hover:text-primary hover:bg-dark-lighter"
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -381,8 +385,10 @@ const Navbar = ({ setShowLogin }) => {
               </Link>
               <Link
                 to="/myorders"
-                className={`font-medium transition-colors ${
-                  location.pathname === "/myorders" ? "text-primary" : "text-white hover:text-primary"
+                className={`font-medium transition-colors py-2 px-4 rounded-lg ${
+                  location.pathname === "/myorders"
+                    ? "text-primary bg-dark-lighter"
+                    : "text-white hover:text-primary hover:bg-dark-lighter"
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -390,8 +396,10 @@ const Navbar = ({ setShowLogin }) => {
               </Link>
               <Link
                 to="/contact"
-                className={`font-medium transition-colors ${
-                  location.pathname === "/contact" ? "text-primary" : "text-white hover:text-primary"
+                className={`font-medium transition-colors py-2 px-4 rounded-lg ${
+                  location.pathname === "/contact"
+                    ? "text-primary bg-dark-lighter"
+                    : "text-white hover:text-primary hover:bg-dark-lighter"
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >

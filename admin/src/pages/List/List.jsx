@@ -141,11 +141,11 @@ const List = ({ url }) => {
               placeholder="Tìm kiếm sản phẩm..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+              className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2.5 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <button
               type="submit"
-              className="absolute inset-y-0 right-0 px-4 flex items-center bg-primary rounded-r-lg text-dark"
+              className="absolute inset-y-0 right-0 px-3 flex items-center bg-primary rounded-r-lg text-dark"
             >
               Tìm
             </button>
@@ -153,14 +153,14 @@ const List = ({ url }) => {
 
           {/* Category Filter */}
           <div className="flex items-center">
-            <div className="relative">
+            <div className="relative flex-grow">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Filter className="h-5 w-5 text-gray-400" />
               </div>
               <select
                 value={selectedCategory}
                 onChange={(e) => handleCategoryChange(e.target.value)}
-                className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2.5 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {categories.map((category) => (
                   <option key={category} value={category}>
@@ -171,7 +171,7 @@ const List = ({ url }) => {
             </div>
             <button
               onClick={() => fetchList(selectedCategory)}
-              className="ml-2 p-3 bg-gray-100 dark:bg-dark-lighter rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-dark transition-colors"
+              className="ml-2 p-2.5 bg-gray-100 dark:bg-dark-lighter rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-dark transition-colors flex-shrink-0"
               title="Refresh"
             >
               <RefreshCw size={20} />
@@ -185,41 +185,49 @@ const List = ({ url }) => {
           </div>
         ) : currentItems.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {currentItems.map((item) => (
                 <div
                   key={item._id}
                   className="bg-white dark:bg-dark rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow border border-gray-100 dark:border-dark-lighter"
                 >
-                  <div className="h-48 overflow-hidden">
+                  <div className="h-40 sm:h-48 overflow-hidden">
                     <img
                       src={`${url}/images/${item.image}`}
                       alt={item.name}
                       className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                     />
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-gray-800 dark:text-white text-lg mb-1">{item.name}</h3>
+                  <div className="p-3 sm:p-4">
+                    <h3 className="font-bold text-gray-800 dark:text-white text-base sm:text-lg mb-1 line-clamp-1">
+                      {item.name}
+                    </h3>
                     <div className="flex items-center mb-2">
-                      <span className="bg-primary-light text-dark text-xs px-2 py-1 rounded-full">{item.category}</span>
+                      <span className="bg-primary-light text-dark text-xs px-2 py-0.5 rounded-full">
+                        {item.category}
+                      </span>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-2">{item.description}</p>
+                    <p className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm mb-3 line-clamp-2">
+                      {item.description}
+                    </p>
                     <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold text-primary">{item.price.toLocaleString("vi-VN")} đ</span>
-                      <div className="flex space-x-2">
+                      <span className="text-base sm:text-lg font-bold text-primary">
+                        {item.price.toLocaleString("vi-VN")} đ
+                      </span>
+                      <div className="flex space-x-1 sm:space-x-2">
                         <button
                           onClick={() => handleEditClick(item)}
-                          className="p-2 bg-blue-100 text-blue-500 rounded-full hover:bg-blue-200 transition-colors"
+                          className="p-1.5 sm:p-2 bg-blue-100 text-blue-500 rounded-full hover:bg-blue-200 transition-colors"
                           title="Sửa sản phẩm"
                         >
-                          <Edit size={18} />
+                          <Edit size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteClick(item._id)}
-                          className="p-2 bg-red-100 text-red-500 rounded-full hover:bg-red-200 transition-colors"
+                          className="p-1.5 sm:p-2 bg-red-100 text-red-500 rounded-full hover:bg-red-200 transition-colors"
                           title="Xóa sản phẩm"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </div>

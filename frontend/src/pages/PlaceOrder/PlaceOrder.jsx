@@ -186,15 +186,18 @@ const PlaceOrder = () => {
         // Xóa giỏ hàng sau khi đặt hàng thành công
         setCartItems({})
 
+        console.log("Order placed successfully:", response.data)
+        console.log(
+          "Redirecting to:",
+          paymentMethod === "COD" ? "/thankyou" : `/payment/${paymentMethod}/${response.data.orderId}`,
+        )
+
         // Chuyển hướng dựa trên phương thức thanh toán
         if (paymentMethod === "COD") {
           navigate("/thankyou")
         } else {
-          // Mô phỏng chuyển hướng đến trang thanh toán
-          toast.success("Đang chuyển hướng đến trang thanh toán...")
-          setTimeout(() => {
-            navigate(`/payment/${paymentMethod}/${response.data.orderId}`)
-          }, 1000)
+          // Chuyển hướng đến trang thanh toán
+          navigate(`/payment/${paymentMethod}/${response.data.orderId}`)
         }
       } else {
         toast.error(response.data.message || "Đã xảy ra lỗi khi đặt hàng")

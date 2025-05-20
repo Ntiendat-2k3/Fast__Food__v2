@@ -96,15 +96,15 @@ const Revenue = ({ url }) => {
         ) : (
           <>
             {/* Revenue Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white dark:bg-dark rounded-xl p-6 shadow-md border border-gray-100 dark:border-dark-lighter">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+              <div className="bg-white dark:bg-dark rounded-xl p-4 sm:p-6 shadow-md border border-gray-100 dark:border-dark-lighter">
                 <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mr-4">
-                    <DollarSign size={24} className="text-primary" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/20 rounded-full flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
+                    <DollarSign size={22} className="text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Tổng doanh thu</p>
-                    <p className="text-2xl font-bold text-gray-800 dark:text-white">
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Tổng doanh thu</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">
                       {totalRevenue.toLocaleString("vi-VN")} đ
                     </p>
                   </div>
@@ -114,14 +114,14 @@ const Revenue = ({ url }) => {
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-dark rounded-xl p-6 shadow-md border border-gray-100 dark:border-dark-lighter">
+              <div className="bg-white dark:bg-dark rounded-xl p-4 sm:p-6 shadow-md border border-gray-100 dark:border-dark-lighter">
                 <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mr-4">
-                    <ShoppingBag size={24} className="text-green-500" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
+                    <ShoppingBag size={22} className="text-green-500" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Tổng đơn hàng</p>
-                    <p className="text-2xl font-bold text-gray-800 dark:text-white">{orders.length}</p>
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Tổng đơn hàng</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">{orders.length}</p>
                   </div>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-dark-lighter rounded-full h-2">
@@ -132,14 +132,14 @@ const Revenue = ({ url }) => {
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-dark rounded-xl p-6 shadow-md border border-gray-100 dark:border-dark-lighter">
+              <div className="bg-white dark:bg-dark rounded-xl p-4 sm:p-6 shadow-md border border-gray-100 dark:border-dark-lighter sm:col-span-2 lg:col-span-1">
                 <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mr-4">
-                    <Calendar size={24} className="text-blue-500" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0">
+                    <Calendar size={22} className="text-blue-500" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Phí vận chuyển</p>
-                    <p className="text-2xl font-bold text-gray-800 dark:text-white">
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Phí vận chuyển</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">
                       {(orders.length * 14000).toLocaleString("vi-VN")} đ
                     </p>
                   </div>
@@ -151,11 +151,11 @@ const Revenue = ({ url }) => {
             </div>
 
             {/* Revenue Tabs */}
-            <div className="mb-6">
-              <div className="flex border-b border-gray-200 dark:border-dark-lighter">
+            <div className="mb-6 overflow-x-auto">
+              <div className="flex border-b border-gray-200 dark:border-dark-lighter min-w-[300px]">
                 <button
                   onClick={() => setActiveTab("category")}
-                  className={`py-3 px-6 font-medium text-sm ${
+                  className={`py-2.5 px-4 sm:px-6 font-medium text-sm whitespace-nowrap ${
                     activeTab === "category"
                       ? "border-b-2 border-primary text-primary"
                       : "text-gray-600 dark:text-gray-300"
@@ -166,7 +166,7 @@ const Revenue = ({ url }) => {
                 </button>
                 <button
                   onClick={() => setActiveTab("product")}
-                  className={`py-3 px-6 font-medium text-sm ${
+                  className={`py-2.5 px-4 sm:px-6 font-medium text-sm whitespace-nowrap ${
                     activeTab === "product"
                       ? "border-b-2 border-primary text-primary"
                       : "text-gray-600 dark:text-gray-300"
@@ -181,11 +181,11 @@ const Revenue = ({ url }) => {
             {/* Revenue Charts and Tables */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Chart */}
-              <div className="bg-white dark:bg-dark rounded-xl p-6 shadow-md border border-gray-100 dark:border-dark-lighter">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+              <div className="bg-white dark:bg-dark rounded-xl p-4 sm:p-6 shadow-md border border-gray-100 dark:border-dark-lighter">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white mb-4">
                   Biểu đồ doanh thu {activeTab === "category" ? "theo danh mục" : "theo sản phẩm"}
                 </h2>
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex flex-wrap gap-2 mb-4 max-h-24 overflow-y-auto scrollbar-thin">
                   {Object.entries(activeTab === "category" ? categoryRevenue : productRevenue).map(
                     ([name, revenue], index) => (
                       <div key={name} className="flex items-center">
@@ -195,18 +195,18 @@ const Revenue = ({ url }) => {
                     ),
                   )}
                 </div>
-                <div className="relative h-64">
-                  <div className="absolute inset-0 flex items-end">
+                <div className="relative h-48 sm:h-64">
+                  <div className="absolute inset-0 flex items-end overflow-x-auto pb-1 scrollbar-thin">
                     {Object.entries(activeTab === "category" ? categoryRevenue : productRevenue).map(
                       ([name, revenue], index) => {
                         const percentage = getPercentage(revenue)
                         return (
                           <div
                             key={name}
-                            className={`${getColor(index)} rounded-t-lg mx-1`}
+                            className={`${getColor(index)} rounded-t-lg mx-0.5 sm:mx-1 min-w-[20px]`}
                             style={{
                               height: `${percentage}%`,
-                              width: `${100 / Object.keys(activeTab === "category" ? categoryRevenue : productRevenue).length}%`,
+                              width: `${100 / Math.min(Object.keys(activeTab === "category" ? categoryRevenue : productRevenue).length, 10)}%`,
                             }}
                             title={`${name}: ${percentage}%`}
                           ></div>
@@ -218,21 +218,21 @@ const Revenue = ({ url }) => {
               </div>
 
               {/* Table */}
-              <div className="bg-white dark:bg-dark rounded-xl p-6 shadow-md border border-gray-100 dark:border-dark-lighter">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+              <div className="bg-white dark:bg-dark rounded-xl p-4 sm:p-6 shadow-md border border-gray-100 dark:border-dark-lighter">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white mb-4">
                   Doanh thu {activeTab === "category" ? "theo danh mục" : "theo sản phẩm"}
                 </h2>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-lighter">
                     <thead>
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           {activeTab === "category" ? "Danh mục" : "Sản phẩm"}
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Doanh thu
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Phần trăm
                         </th>
                       </tr>
@@ -241,47 +241,59 @@ const Revenue = ({ url }) => {
                       {Object.entries(activeTab === "category" ? categoryRevenue : productRevenue).map(
                         ([name, revenue], index) => (
                           <tr key={name} className="hover:bg-gray-50 dark:hover:bg-dark-lighter">
-                            <td className="px-4 py-3 text-sm text-gray-800 dark:text-white">{name}</td>
-                            <td className="px-4 py-3 text-sm text-gray-800 dark:text-white">
+                            <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-800 dark:text-white">
+                              {name}
+                            </td>
+                            <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-800 dark:text-white">
                               {revenue.toLocaleString("vi-VN")} đ
                             </td>
-                            <td className="px-4 py-3 text-sm">
+                            <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">
                               <div className="flex items-center">
-                                <div className="w-full bg-gray-200 dark:bg-dark-lighter rounded-full h-2 mr-2">
+                                <div className="w-full bg-gray-200 dark:bg-dark-lighter rounded-full h-1.5 sm:h-2 mr-2 max-w-[100px]">
                                   <div
-                                    className={`${getColor(index)} h-2 rounded-full`}
+                                    className={`${getColor(index)} h-1.5 sm:h-2 rounded-full`}
                                     style={{ width: `${getPercentage(revenue)}%` }}
                                   ></div>
                                 </div>
-                                <span className="text-gray-800 dark:text-white">{getPercentage(revenue)}%</span>
+                                <span className="text-gray-800 dark:text-white whitespace-nowrap">
+                                  {getPercentage(revenue)}%
+                                </span>
                               </div>
                             </td>
                           </tr>
                         ),
                       )}
                       <tr className="hover:bg-gray-50 dark:hover:bg-dark-lighter">
-                        <td className="px-4 py-3 text-sm text-gray-800 dark:text-white">Phí ship</td>
-                        <td className="px-4 py-3 text-sm text-gray-800 dark:text-white">
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-800 dark:text-white">
+                          Phí ship
+                        </td>
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-800 dark:text-white">
                           {(orders.length * 14000).toLocaleString("vi-VN")} đ
                         </td>
-                        <td className="px-4 py-3 text-sm">
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">
                           <div className="flex items-center">
-                            <div className="w-full bg-gray-200 dark:bg-dark-lighter rounded-full h-2 mr-2">
+                            <div className="w-full bg-gray-200 dark:bg-dark-lighter rounded-full h-1.5 sm:h-2 mr-2 max-w-[100px]">
                               <div
-                                className="bg-blue-500 h-2 rounded-full"
+                                className="bg-blue-500 h-1.5 sm:h-2 rounded-full"
                                 style={{ width: `${getPercentage_ship()}%` }}
                               ></div>
                             </div>
-                            <span className="text-gray-800 dark:text-white">{getPercentage_ship()}%</span>
+                            <span className="text-gray-800 dark:text-white whitespace-nowrap">
+                              {getPercentage_ship()}%
+                            </span>
                           </div>
                         </td>
                       </tr>
                       <tr className="bg-gray-50 dark:bg-dark-lighter font-medium">
-                        <td className="px-4 py-3 text-sm text-gray-800 dark:text-white">Tổng doanh thu</td>
-                        <td className="px-4 py-3 text-sm text-primary font-bold">
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-800 dark:text-white">
+                          Tổng doanh thu
+                        </td>
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-primary font-bold">
                           {totalRevenue.toLocaleString("vi-VN")} đ
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-800 dark:text-white">100%</td>
+                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-800 dark:text-white">
+                          100%
+                        </td>
                       </tr>
                     </tbody>
                   </table>

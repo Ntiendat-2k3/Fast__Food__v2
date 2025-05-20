@@ -219,11 +219,11 @@ const ProductDetail = () => {
         </nav>
 
         {/* Product Detail Section */}
-        <div className="bg-white dark:bg-dark-light rounded-xl overflow-hidden shadow-lg mb-12 ">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 md:p-8">
+        <div className="bg-white dark:bg-dark-light rounded-xl overflow-hidden shadow-lg mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-4 sm:p-6 md:p-8">
             {/* Product Images */}
             <div>
-              <div className="relative h-80 md:h-96 mb-4 rounded-lg overflow-hidden">
+              <div className="relative h-64 sm:h-80 md:h-96 mb-4 rounded-lg overflow-hidden">
                 <motion.img
                   key={activeImage}
                   initial={{ opacity: 0 }}
@@ -245,12 +245,12 @@ const ProductDetail = () => {
                   </button>
                 </div>
               </div>
-              <div className="flex space-x-2 overflow-x-auto pb-2">
+              <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
                 {productImages.map((image, index) => (
                   <div
                     key={index}
                     onClick={() => setActiveImage(index)}
-                    className={`cursor-pointer rounded-md overflow-hidden w-20 h-20 border-2 ${activeImage === index ? "border-primary" : "border-transparent"}`}
+                    className={`cursor-pointer rounded-md overflow-hidden w-16 h-16 sm:w-20 sm:h-20 border-2 flex-shrink-0 ${activeImage === index ? "border-primary" : "border-transparent"}`}
                   >
                     <img
                       src={image || "/placeholder.svg"}
@@ -263,9 +263,9 @@ const ProductDetail = () => {
             </div>
 
             {/* Product Info */}
-            <div>
-              <div className="flex items-center mb-2">
-                <div className="flex">
+            <div className="px-1 sm:px-0">
+              <div className="flex items-center mb-2 flex-wrap">
+                <div className="flex mr-2">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
@@ -276,27 +276,28 @@ const ProductDetail = () => {
                     />
                   ))}
                 </div>
-                <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">
+                <span className="text-sm text-gray-600 dark:text-gray-300 mr-2">
                   {reviews.length > 0 ? `${averageRating} (${reviews.length} đánh giá)` : "Chưa có đánh giá"}
                 </span>
-                <span className="mx-2 text-gray-400">|</span>
-                <span className="text-sm text-green-600 dark:text-green-400 flex items-center">
+                <span className="text-sm text-green-600 dark:text-green-400 flex items-center mt-1 sm:mt-0">
                   <Check size={16} className="mr-1" /> Đã bán 120+
                 </span>
               </div>
 
-              <h1 className="text-3xl font-bold text-dark dark:text-white mb-2">{foodItem.name}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-dark dark:text-white mb-2">{foodItem.name}</h1>
 
               <div className="mb-4">
-                <span className="text-3xl font-bold text-primary mr-3">{foodItem.price.toLocaleString("vi-VN")} đ</span>
+                <span className="text-2xl sm:text-3xl font-bold text-primary mr-3">
+                  {foodItem.price.toLocaleString("vi-VN")} đ
+                </span>
                 {Math.random() > 0.5 && (
-                  <span className="text-xl text-gray-400 line-through">
+                  <span className="text-lg sm:text-xl text-gray-400 line-through">
                     {(foodItem.price * 1.2).toFixed(0).toLocaleString("vi-VN")} đ
                   </span>
                 )}
               </div>
 
-              <div className="bg-gray-50 dark:bg-dark-light p-4 rounded-lg mb-6">
+              <div className="bg-gray-50 dark:bg-dark-light p-3 sm:p-4 rounded-lg mb-6">
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{foodItem.description}</p>
               </div>
 
@@ -341,7 +342,7 @@ const ProductDetail = () => {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex items-center">
                   <div className="p-2 bg-primary/10 rounded-full mr-3">
                     <Truck size={20} className="text-primary" />

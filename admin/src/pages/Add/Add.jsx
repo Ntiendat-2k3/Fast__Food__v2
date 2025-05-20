@@ -77,7 +77,7 @@ const Add = ({ url }) => {
 
         <form onSubmit={onSubmitHandler} className="space-y-6">
           {/* Image Upload Section */}
-          <div className="mb-6">
+          <div className="mb-5">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Hình ảnh sản phẩm</label>
             <div className="flex items-center justify-center">
               <div className="w-full">
@@ -86,7 +86,7 @@ const Add = ({ url }) => {
                     <img
                       src={imagePreview || "/placeholder.svg"}
                       alt="Preview"
-                      className="h-64 w-full object-cover rounded-lg"
+                      className="h-56 w-full object-cover rounded-lg"
                     />
                     <button
                       type="button"
@@ -100,7 +100,7 @@ const Add = ({ url }) => {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-dark hover:bg-gray-100 dark:hover:bg-dark-lighter transition-colors">
+                  <label className="flex flex-col items-center justify-center w-full h-56 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-dark hover:bg-gray-100 dark:hover:bg-dark-lighter transition-colors">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <Upload className="w-10 h-10 mb-3 text-gray-400" />
                       <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
@@ -122,10 +122,13 @@ const Add = ({ url }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {/* Product Name */}
             <div>
-              <label htmlFor="productName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="productName"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+              >
                 Tên sản phẩm
               </label>
               <div className="relative">
@@ -140,7 +143,7 @@ const Add = ({ url }) => {
                   id="productName"
                   placeholder="Nhập tên sản phẩm"
                   required
-                  className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2.5 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>
@@ -149,7 +152,7 @@ const Add = ({ url }) => {
             <div>
               <label
                 htmlFor="productCategory"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
               >
                 Danh mục sản phẩm
               </label>
@@ -163,7 +166,7 @@ const Add = ({ url }) => {
                   id="productCategory"
                   value={data.category}
                   required
-                  className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2.5 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Chọn danh mục</option>
                   {categories.map((category) => (
@@ -177,7 +180,10 @@ const Add = ({ url }) => {
 
             {/* Product Price */}
             <div>
-              <label htmlFor="productPrice" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="productPrice"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+              >
                 Giá sản phẩm
               </label>
               <div className="relative">
@@ -192,17 +198,17 @@ const Add = ({ url }) => {
                   id="productPrice"
                   placeholder="Nhập giá"
                   required
-                  className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2.5 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>
           </div>
 
           {/* Product Description */}
-          <div>
+          <div className="mt-4">
             <label
               htmlFor="productDescription"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
             >
               Thông tin chi tiết
             </label>
@@ -214,15 +220,15 @@ const Add = ({ url }) => {
               rows="4"
               placeholder="Nhập thông tin chi tiết"
               required
-              className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-3 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+              className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark py-2.5 px-4 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
           {/* Submit Button */}
-          <div>
+          <div className="mt-6">
             <button
               type="submit"
-              className="w-full md:w-auto bg-primary hover:bg-primary-dark text-dark font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+              className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-dark font-medium py-2.5 px-6 rounded-lg transition-colors flex items-center justify-center"
             >
               <Save className="mr-2" size={20} />
               Thêm sản phẩm

@@ -34,6 +34,10 @@ const Payment = () => {
   }
 
   useEffect(() => {
+    console.log("Payment page loaded with params:", { method, orderId })
+  }, [method, orderId])
+
+  useEffect(() => {
     // Đếm ngược thời gian
     const timer = setInterval(() => {
       setCountdown((prev) => {
@@ -66,6 +70,7 @@ const Payment = () => {
   // Xử lý hoàn thành thanh toán
   const handleCompletePayment = async () => {
     setIsProcessing(true)
+    console.log("Completing payment for order:", orderId)
 
     try {
       // Gọi API để cập nhật trạng thái thanh toán
@@ -74,6 +79,8 @@ const Payment = () => {
         success: "true",
         paymentMethod: method,
       })
+
+      console.log("Payment verification response:", response.data)
 
       if (response.data.success) {
         toast.success("Thanh toán thành công!")

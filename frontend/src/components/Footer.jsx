@@ -5,7 +5,7 @@ const Footer = () => {
   return (
     <footer className="bg-dark text-white">
       <div className="container mx-auto px-4 md:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center mb-6">
               <div className="bg-primary p-2 rounded-lg mr-2">
@@ -51,7 +51,7 @@ const Footer = () => {
             </div>
           </div>
 
-          <div>
+          <div className="mt-8 sm:mt-0">
             <h3 className="text-lg font-bold mb-6">Thông tin</h3>
             <ul className="space-y-3">
               <li>
@@ -82,7 +82,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div>
+          <div className="mt-8 lg:mt-0">
             <h3 className="text-lg font-bold mb-6">Liên kết hữu ích</h3>
             <ul className="space-y-3">
               <li>
@@ -108,7 +108,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div>
+          <div className="mt-8 lg:mt-0">
             <h3 className="text-lg font-bold mb-6">Thực đơn của chúng tôi</h3>
             <ul className="space-y-3">
               <li>
@@ -131,10 +131,10 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 text-sm mb-4 md:mb-0">
+          <p className="text-gray-400 text-sm mb-4 md:mb-0 text-center md:text-left">
             &copy; {new Date().getFullYear()} GreenEats. Tất cả các quyền được bảo lưu.
           </p>
-          <div className="flex space-x-6">
+          <div className="flex flex-wrap justify-center md:justify-end gap-4 md:space-x-6">
             <Link to="/" className="text-gray-400 hover:text-primary transition-colors text-sm">
               Chính sách bảo mật
             </Link>

@@ -82,32 +82,32 @@ const Sidebar = ({ onLogout }) => {
     {
       path: "/chat",
       name: "Tin nhắn",
-      icon: <MessageSquare size={20} />
-    }
+      icon: <MessageSquare size={20} />,
+    },
   ]
 
   return (
     <>
       {/* Mobile menu button */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-white dark:bg-dark shadow-md md:hidden">
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-3 bg-white dark:bg-dark shadow-md md:hidden">
         <button
           onClick={toggleSidebar}
-          className="p-2 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
+          className="p-1.5 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
         >
-          <Menu size={24} />
+          <Menu size={22} />
         </button>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
+            className="p-1.5 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none"
           >
-            {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           <button
             onClick={handleLogout}
-            className="p-2 rounded-md text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none"
+            className="p-1.5 rounded-md text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none"
           >
-            <LogOut size={20} />
+            <LogOut size={18} />
           </button>
         </div>
       </div>
@@ -125,26 +125,26 @@ const Sidebar = ({ onLogout }) => {
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
           <Link to="/" className="flex items-center space-x-2" onClick={closeSidebar}>
-            <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
-            <span className="text-xl font-bold text-primary">Admin</span>
+            <img src="/logo.png" alt="Logo" className="h-7 w-auto" />
+            <span className="text-lg font-bold text-primary">Admin</span>
           </Link>
           <button
             onClick={closeSidebar}
-            className="p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden focus:outline-none"
+            className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden focus:outline-none"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
-        <nav className="mt-6 px-4">
-          <ul className="space-y-2">
+        <nav className="mt-4 px-3 max-h-[calc(100vh-120px)] overflow-y-auto">
+          <ul className="space-y-1.5">
             {menuItems.map((item) => (
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                  className={`flex items-center px-3 py-2.5 rounded-lg transition-colors ${
                     isActive(item.path)
                       ? "bg-primary text-white"
                       : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -152,28 +152,27 @@ const Sidebar = ({ onLogout }) => {
                   onClick={closeSidebar}
                 >
                   {item.icon}
-                  <span className="ml-3">{item.name}</span>
+                  <span className="ml-3 text-sm">{item.name}</span>
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
 
-        <div className="absolute bottom-0 w-full p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="absolute bottom-0 w-full p-3 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <button
               onClick={toggleTheme}
-              className="flex items-center px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              className="flex items-center px-3 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-sm"
             >
-              {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
               <span className="ml-3">{theme === "dark" ? "Sáng" : "Tối"}</span>
             </button>
             <button
               onClick={handleLogout}
-              className="flex items-center px-4 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              className="flex items-center px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
             >
-              <LogOut size={20} />
-              {/* <span className="ml-3">Đăng xuất</span> */}
+              <LogOut size={18} />
             </button>
           </div>
         </div>

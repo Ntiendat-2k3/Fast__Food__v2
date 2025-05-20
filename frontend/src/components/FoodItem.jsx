@@ -31,10 +31,10 @@ function FoodItem({ name, price, description, image, index }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
-      className="bg-white dark:bg-dark-light rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 dark:border-dark-lighter cursor-pointer"
+      className="bg-white dark:bg-dark-light rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 dark:border-dark-lighter cursor-pointer h-full flex flex-col"
       onClick={handleClick}
     >
-      <div className="relative h-48 overflow-hidden">
+      <div className="relative h-40 sm:h-48 overflow-hidden">
         <img
           src={url + "/images/" + image || "/placeholder.svg"}
           alt={name}
@@ -47,10 +47,10 @@ function FoodItem({ name, price, description, image, index }) {
           </div>
         </div>
       </div>
-      <div className="p-4">
+      <div className="p-4 flex-1 flex flex-col">
         <h3 className="text-lg font-bold text-dark dark:text-white mb-1 truncate">{name}</h3>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mb-3 line-clamp-2">{description}</p>
-        <div className="flex justify-between items-center">
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-3 line-clamp-2 flex-1">{description}</p>
+        <div className="flex justify-between items-center mt-auto">
           <span className="text-xl font-bold text-primary">{price?.toLocaleString("vi-VN") || 0} đ</span>
           <button
             onClick={handleAddToCart}

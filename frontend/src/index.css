@@ -108,3 +108,31 @@ header span:not(.text-primary):not(.bg-accent):not(.bg-red-500) {
 header .text-primary {
   color: #ffdd00;
 }
+
+/* Fix for mobile tables */
+@media (max-width: 640px) {
+  .table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Improve form elements on mobile */
+@media (max-width: 640px) {
+
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+    /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Fix for sticky headers on mobile */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}

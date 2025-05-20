@@ -96,9 +96,9 @@ const Cart = () => {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto -mx-6 px-6">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-lighter">
-                <thead>
+                <thead className="hidden sm:table-header-group">
                   <tr className="text-left border-b border-gray-200 dark:border-dark-lighter">
                     <th className="pb-4 text-dark dark:text-white font-medium">Sản phẩm</th>
                     <th className="pb-4 text-dark dark:text-white font-medium">Giá</th>
@@ -111,45 +111,60 @@ const Cart = () => {
                   {food_list.map((item, index) => {
                     if (cartItems[item.name] > 0) {
                       return (
-                        <tr key={index} className="border-b border-gray-200 dark:border-dark-lighter">
-                          <td className="py-4">
+                        <tr
+                          key={index}
+                          className="sm:border-b border-gray-200 dark:border-dark-lighter block sm:table-row mb-6 sm:mb-0"
+                        >
+                          <td className="py-4 flex items-center sm:table-cell">
                             <div className="flex items-center">
                               <img
                                 src={url + "/images/" + item.image || "/placeholder.svg"}
                                 alt={item.name}
                                 className="w-16 h-16 object-cover rounded-lg mr-4"
                               />
-                              <span className="text-dark dark:text-white">{item.name}</span>
+                              <div className="sm:hidden flex flex-col">
+                                <span className="text-dark dark:text-white font-medium">{item.name}</span>
+                                <span className="text-gray-600 dark:text-gray-300 text-sm mt-1">
+                                  {item.price.toLocaleString("vi-VN")} đ
+                                </span>
+                              </div>
+                              <span className="hidden sm:block text-dark dark:text-white">{item.name}</span>
                             </div>
                           </td>
-                          <td className="py-4 text-gray-600 dark:text-gray-300">
+                          <td className="py-4 text-gray-600 dark:text-gray-300 hidden sm:table-cell">
                             {item.price.toLocaleString("vi-VN")} đ
                           </td>
-                          <td className="py-4">
-                            <div className="flex items-center">
-                              <button
-                                onClick={() => removeFromCart(item.name)}
-                                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-light text-dark dark:text-white flex items-center justify-center hover:bg-primary transition-colors"
-                                aria-label="Giảm số lượng"
-                              >
-                                <Minus size={16} />
-                              </button>
-                              <span className="mx-3 text-gray-600 dark:text-gray-300 min-w-[30px] text-center">
-                                {cartItems[item.name]}
-                              </span>
-                              <button
-                                onClick={() => addToCart(item.name, 1)}
-                                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-light text-dark dark:text-white flex items-center justify-center hover:bg-primary transition-colors"
-                                aria-label="Tăng số lượng"
-                              >
-                                <Plus size={16} />
-                              </button>
+                          <td className="py-4 sm:table-cell block">
+                            <div className="flex items-center justify-between sm:justify-start">
+                              <span className="sm:hidden text-gray-600 dark:text-gray-400">Số lượng:</span>
+                              <div className="flex items-center">
+                                <button
+                                  onClick={() => removeFromCart(item.name)}
+                                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-light text-dark dark:text-white flex items-center justify-center hover:bg-primary transition-colors"
+                                  aria-label="Giảm số lượng"
+                                >
+                                  <Minus size={16} />
+                                </button>
+                                <span className="mx-3 text-gray-600 dark:text-gray-300 min-w-[30px] text-center">
+                                  {cartItems[item.name]}
+                                </span>
+                                <button
+                                  onClick={() => addToCart(item.name, 1)}
+                                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-light text-dark dark:text-white flex items-center justify-center hover:bg-primary transition-colors"
+                                  aria-label="Tăng số lượng"
+                                >
+                                  <Plus size={16} />
+                                </button>
+                              </div>
                             </div>
                           </td>
-                          <td className="py-4 text-dark dark:text-white font-medium">
-                            {(item.price * cartItems[item.name]).toLocaleString("vi-VN")} đ
+                          <td className="py-4 text-dark dark:text-white font-medium sm:table-cell block">
+                            <div className="flex justify-between sm:justify-start">
+                              <span className="sm:hidden text-gray-600 dark:text-gray-400">Tổng:</span>
+                              <span>{(item.price * cartItems[item.name]).toLocaleString("vi-VN")} đ</span>
+                            </div>
                           </td>
-                          <td className="py-4">
+                          <td className="py-4 sm:table-cell block text-right sm:text-left">
                             <button
                               onClick={() => removeFromCartAll(item.name)}
                               className="text-red-500 hover:text-red-400 transition-colors"
