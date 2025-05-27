@@ -26,10 +26,11 @@ import {
 import { motion } from "framer-motion"
 import { slugify } from "../../utils/slugify"
 import ReviewForm from "../../components/ReviewForm"
+import EditCommentForm from "../../components/EditCommentForm"
 
 const ProductDetail = () => {
   const { slug } = useParams()
-  const { cartItems, addToCart, url, user } = useContext(StoreContext)
+  const { cartItems, addToCart, url, user, token, userData } = useContext(StoreContext)
   const { food_list } = useContext(StoreContext)
   const navigate = useNavigate()
 
@@ -41,6 +42,16 @@ const ProductDetail = () => {
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [reviews, setReviews] = useState([])
   const [isLoadingReviews, setIsLoadingReviews] = useState(false)
+  const [ratingStats, setRatingStats] = useState({ averageRating: 0, totalReviews: 0 })
+  const [relatedRatings, setRelatedRatings] = useState({})
+  const [editingCommentId, setEditingCommentId] = useState(null)
+
+  // Debug user data
+  useEffect(() => {
+    console.log("Current user:", user)
+    console.log("Token:", token)
+    console.log("UserData:", userData)
+  }, [user, token, userData])
 
   // Tìm sản phẩm dựa trên slug (từ tên sản phẩm)
   const foodItem = food_list.find((item) => compareNameWithSlug(item.name, slug))
@@ -55,20 +66,24 @@ const ProductDetail = () => {
         .slice(0, 4)
       setRelatedProducts(related)
 
-      // Fetch reviews for this product
+      // Fetch reviews and rating stats for this product
       if (foodItem._id) {
         fetchReviews(foodItem._id)
-      } else {
-        console.error("Food item does not have an _id:", foodItem)
+        fetchRatingStats(foodItem._id)
+        checkWishlistStatus(foodItem._id)
       }
+
+      // Fetch ratings for related products
+      related.forEach((item) => {
+        if (item._id) {
+          fetchRelatedRating(item._id)
+        }
+      })
     }
-  }, [foodItem, food_list, slug])
+  }, [foodItem, food_list, slug, token])
 
   const fetchReviews = async (foodId) => {
-    if (!foodId) {
-      console.error("Cannot fetch reviews: foodId is undefined")
-      return
-    }
+    if (!foodId) return
 
     try {
       setIsLoadingReviews(true)
@@ -83,9 +98,49 @@ const ProductDetail = () => {
     }
   }
 
+  const fetchRatingStats = async (foodId) => {
+    try {
+      const response = await axios.get(`${url}/api/comment/food/${foodId}/stats`)
+      if (response.data.success) {
+        setRatingStats(response.data.data)
+      }
+    } catch (error) {
+      console.error("Error fetching rating stats:", error)
+    }
+  }
+
+  const fetchRelatedRating = async (foodId) => {
+    try {
+      const response = await axios.get(`${url}/api/comment/food/${foodId}/stats`)
+      if (response.data.success) {
+        setRelatedRatings((prev) => ({
+          ...prev,
+          [foodId]: response.data.data.averageRating,
+        }))
+      }
+    } catch (error) {
+      console.error("Error fetching related rating:", error)
+    }
+  }
+
+  const checkWishlistStatus = async (foodId) => {
+    if (!token) return
+
+    try {
+      const response = await axios.get(`${url}/api/wishlist/check/${foodId}`, {
+        headers: { token },
+      })
+      if (response.data.success) {
+        setIsInWishlist(response.data.isInWishlist)
+      }
+    } catch (error) {
+      console.error("Error checking wishlist status:", error)
+    }
+  }
+
   const handleAddToCart = () => {
     if (foodItem) {
-      addToCart(foodItem.name, quantity) // Sử dụng name thay vì ID
+      addToCart(foodItem.name, quantity)
       toast.success("Đã thêm vào giỏ hàng", {
         position: "top-right",
         autoClose: 3000,
@@ -99,7 +154,6 @@ const ProductDetail = () => {
 
   const handleBuyNow = () => {
     if (foodItem) {
-      // Then add only this product
       addToCart(foodItem.name, quantity)
       navigate("/order")
     }
@@ -115,22 +169,45 @@ const ProductDetail = () => {
     }
   }
 
-  const toggleWishlist = () => {
-    setIsInWishlist(!isInWishlist)
-    toast.info(isInWishlist ? "Đã xóa khỏi danh sách yêu thích" : "Đã thêm vào danh sách yêu thích", {
-      autoClose: 2000,
-    })
+  const toggleWishlist = async () => {
+    if (!token) {
+      toast.info("Vui lòng đăng nhập để thêm vào danh sách yêu thích")
+      return
+    }
+
+    if (!foodItem?._id) {
+      toast.error("Không thể xác định sản phẩm")
+      return
+    }
+
+    try {
+      const endpoint = isInWishlist ? "/api/wishlist/remove" : "/api/wishlist/add"
+      const response = await axios.post(`${url}${endpoint}`, { foodId: foodItem._id }, { headers: { token } })
+
+      if (response.data.success) {
+        setIsInWishlist(!isInWishlist)
+        toast.success(response.data.message)
+      } else {
+        toast.error(response.data.message)
+      }
+    } catch (error) {
+      console.error("Error toggling wishlist:", error)
+      toast.error("Có lỗi xảy ra")
+    }
   }
 
   const handleReviewSubmitted = (newReview) => {
     setReviews([newReview, ...reviews])
     setShowReviewForm(false)
     setActiveTab("reviews")
+    // Refresh rating stats
+    if (foodItem._id) {
+      fetchRatingStats(foodItem._id)
+    }
   }
 
   const handleWriteReview = () => {
-    // Check if user is logged in using token instead of user object
-    if (!localStorage.getItem("token")) {
+    if (!token) {
       toast.info("Vui lòng đăng nhập để viết đánh giá")
       return
     }
@@ -144,10 +221,22 @@ const ProductDetail = () => {
     setActiveTab("reviews")
   }
 
-  // Calculate average rating
-  const averageRating = reviews.length
-    ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
-    : 0
+  const handleEditComment = (commentId) => {
+    setEditingCommentId(commentId)
+  }
+
+  const handleSaveEdit = (updatedComment) => {
+    setReviews(reviews.map((review) => (review._id === updatedComment._id ? updatedComment : review)))
+    setEditingCommentId(null)
+    // Refresh rating stats
+    if (foodItem._id) {
+      fetchRatingStats(foodItem._id)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null)
+  }
 
   // Nếu không tìm thấy sản phẩm
   if (!foodItem) {
@@ -236,7 +325,11 @@ const ProductDetail = () => {
                 <div className="absolute top-4 right-4 flex space-x-2">
                   <button
                     onClick={toggleWishlist}
-                    className={`p-2 rounded-full ${isInWishlist ? "bg-red-500 text-white" : "bg-white dark:bg-dark-light text-gray-700 dark:text-gray-300"}`}
+                    className={`p-2 rounded-full transition-colors ${
+                      isInWishlist
+                        ? "bg-red-500 text-white"
+                        : "bg-white dark:bg-dark-light text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    }`}
                   >
                     <Heart size={20} className={isInWishlist ? "fill-current" : ""} />
                   </button>
@@ -271,13 +364,17 @@ const ProductDetail = () => {
                       key={i}
                       size={18}
                       className={
-                        i < averageRating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"
+                        i < Math.floor(ratingStats.averageRating)
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-gray-300 dark:text-gray-600"
                       }
                     />
                   ))}
                 </div>
                 <span className="text-sm text-gray-600 dark:text-gray-300 mr-2">
-                  {reviews.length > 0 ? `${averageRating} (${reviews.length} đánh giá)` : "Chưa có đánh giá"}
+                  {ratingStats.totalReviews > 0
+                    ? `${ratingStats.averageRating.toFixed(1)} (${ratingStats.totalReviews} đánh giá)`
+                    : "Chưa có đánh giá"}
                 </span>
                 <span className="text-sm text-green-600 dark:text-green-400 flex items-center mt-1 sm:mt-0">
                   <Check size={16} className="mr-1" /> Đã bán 120+
@@ -405,7 +502,7 @@ const ProductDetail = () => {
                     : "text-gray-600 dark:text-gray-300"
                 }`}
               >
-                Đánh giá ({reviews.length})
+                Đánh giá ({ratingStats.totalReviews})
               </button>
             </div>
 
@@ -532,49 +629,84 @@ const ProductDetail = () => {
                     </div>
                   ) : reviews.length > 0 ? (
                     <div className="space-y-6">
-                      {reviews.map((review) => (
-                        <div key={review._id} className="border-b border-gray-200 dark:border-dark-lighter pb-6">
-                          <div className="flex items-start">
-                            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300 font-medium mr-4">
-                              {review.userName ? review.userName.charAt(0).toUpperCase() : "U"}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between mb-1">
-                                <h4 className="font-medium text-dark dark:text-white">{review.userName}</h4>
-                                <span className="text-sm text-gray-500 dark:text-gray-400">
-                                  {new Date(review.createdAt).toLocaleDateString("vi-VN")}
-                                </span>
+                      {reviews.map((review) => {
+                        console.log(
+                          "Review userId:",
+                          review.userId,
+                          "User ID:",
+                          user?._id,
+                          "Match:",
+                          review.userId === user?._id,
+                        )
+                        return (
+                          <div key={review._id} className="border-b border-gray-200 dark:border-dark-lighter pb-6">
+                            <div className="flex items-start">
+                              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300 font-medium mr-4">
+                                {review.userName ? review.userName.charAt(0).toUpperCase() : "U"}
                               </div>
-                              <div className="flex mb-2">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    size={16}
-                                    className={
-                                      i < review.rating
-                                        ? "text-yellow-400 fill-yellow-400"
-                                        : "text-gray-300 dark:text-gray-600"
-                                    }
-                                  />
-                                ))}
-                              </div>
-                              <p className="text-gray-600 dark:text-gray-300">{review.comment}</p>
-
-                              {/* Admin Reply */}
-                              {review.adminReply && review.adminReply.message && (
-                                <div className="mt-3 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800">
-                                  <p className="text-sm font-medium text-green-700 dark:text-green-300 mb-1">
-                                    {review.adminReply.message}
-                                  </p>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    {new Date(review.adminReply.createdAt).toLocaleDateString("vi-VN")}
-                                  </p>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between mb-1">
+                                  <h4 className="font-medium text-dark dark:text-white">{review.userName}</h4>
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                                      {new Date(review.createdAt).toLocaleDateString("vi-VN")}
+                                      {review.updatedAt && <span className="ml-1 text-xs">(đã chỉnh sửa)</span>}
+                                    </span>
+                                    {/* Show edit button only for user's own comments */}
+                                    {token && user && review.userId === user._id && (
+                                      <button
+                                        onClick={() => handleEditComment(review._id)}
+                                        className="text-xs text-primary hover:text-primary-dark transition-colors px-2 py-1 rounded border border-primary hover:bg-primary hover:text-white"
+                                      >
+                                        ✏️ Sửa
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
-                              )}
+
+                                {editingCommentId === review._id ? (
+                                  <EditCommentForm
+                                    comment={review}
+                                    onSave={handleSaveEdit}
+                                    onCancel={handleCancelEdit}
+                                    url={url}
+                                    token={token}
+                                  />
+                                ) : (
+                                  <>
+                                    <div className="flex mb-2">
+                                      {[...Array(5)].map((_, i) => (
+                                        <Star
+                                          key={i}
+                                          size={16}
+                                          className={
+                                            i < review.rating
+                                              ? "text-yellow-400 fill-yellow-400"
+                                              : "text-gray-300 dark:text-gray-600"
+                                          }
+                                        />
+                                      ))}
+                                    </div>
+                                    <p className="text-gray-600 dark:text-gray-300">{review.comment}</p>
+
+                                    {/* Admin Reply */}
+                                    {review.adminReply && review.adminReply.message && (
+                                      <div className="mt-3 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-100 dark:border-green-800">
+                                        <p className="text-sm font-medium text-green-700 dark:text-green-300 mb-1">
+                                          {review.adminReply.message}
+                                        </p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                          {new Date(review.adminReply.createdAt).toLocaleDateString("vi-VN")}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   ) : (
                     <div className="text-center py-8 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
@@ -601,7 +733,7 @@ const ProductDetail = () => {
               {relatedProducts.map((item, index) => (
                 <div
                   key={item.name}
-                  className="bg-white dark:bg-dark-light rounded-2xl overflow-hidden shadow-custom hover:shadow-hover transition-all hover:-translate-y-1 border border-gray-100 dark:border-dark-lighter"
+                  className="bg-white dark:bg-dark-light rounded-2xl overflow-hidden shadow-custom hover:shadow-hover transition-all hover:-translate-y-1 border border-gray-100 dark:border-dark-lighter cursor-pointer"
                   onClick={() => navigate(`/product/${slugify(item.name)}`)}
                 >
                   <div className="relative h-48 overflow-hidden">
@@ -612,8 +744,10 @@ const ProductDetail = () => {
                     />
                     <div className="absolute top-2 right-2 bg-white dark:bg-dark rounded-full p-1 shadow-md">
                       <div className="flex items-center">
-                        <Star className="h-4 w-4 text-primary fill-primary" />
-                        <span className="text-xs font-medium ml-1 text-dark dark:text-white">4.8</span>
+                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                        <span className="text-xs font-medium ml-1 text-dark dark:text-white">
+                          {relatedRatings[item._id] ? relatedRatings[item._id].toFixed(1) : "0.0"}
+                        </span>
                       </div>
                     </div>
                   </div>

@@ -9,10 +9,24 @@ const addComment = async (req, res) => {
 
     console.log("Adding comment:", { userId, foodId, rating, comment })
 
+    // Validate required fields
+    if (!userId || !foodId || !rating || !comment) {
+      return res.json({
+        success: false,
+        message: "Thiếu thông tin bắt buộc",
+      })
+    }
+
     // Validate foodId
-    if (!foodId || !mongoose.Types.ObjectId.isValid(foodId)) {
+    if (!mongoose.Types.ObjectId.isValid(foodId)) {
       console.log("Invalid foodId:", foodId)
       return res.json({ success: false, message: "ID sản phẩm không hợp lệ" })
+    }
+
+    // Validate userId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.log("Invalid userId:", userId)
+      return res.json({ success: false, message: "ID người dùng không hợp lệ" })
     }
 
     // Lấy thông tin người dùng
@@ -22,37 +36,122 @@ const addComment = async (req, res) => {
       return res.json({ success: false, message: "Không tìm thấy người dùng" })
     }
 
+    // Tạo comment mới
     const newComment = new commentModel({
       userId,
       foodId,
-      rating,
-      comment,
+      rating: Number(rating),
+      comment: comment.trim(),
       userName: user.name,
+      isApproved: true,
     })
 
     const savedComment = await newComment.save()
     console.log("Comment saved successfully:", savedComment._id)
 
-    // Automatically respond to all reviews
+    // Tự động phản hồi
     const autoResponse = {
       adminReply: {
-        message: `Phản hồi của GreenEats:\nCảm ơn bạn ${user.name} đã đánh giá! Chúng tôi rất vui khi bạn hài lòng với dịch vụ và mong bạn sẽ quay lại ủng hộ chúng tôi.`,
+        message: `Cảm ơn bạn ${user.name} đã đánh giá! Chúng tôi rất vui khi bạn hài lòng với dịch vụ và mong bạn sẽ quay lại ủng hộ chúng tôi.`,
         createdAt: new Date(),
       },
     }
 
-    // Update the comment with the automatic response
     await commentModel.findByIdAndUpdate(savedComment._id, autoResponse)
-    console.log("Added automatic response to review")
 
     res.json({
       success: true,
       message: "Thêm đánh giá thành công",
-      commentId: savedComment._id,
+      data: {
+        _id: savedComment._id,
+        userId: savedComment.userId,
+        userName: user.name,
+        foodId: savedComment.foodId,
+        rating: savedComment.rating,
+        comment: savedComment.comment,
+        createdAt: savedComment.createdAt,
+        adminReply: autoResponse.adminReply,
+      },
     })
   } catch (error) {
-    console.log("Error adding comment:", error)
-    res.json({ success: false, message: "Lỗi khi thêm đánh giá" })
+    console.error("Error adding comment:", error)
+    res.json({
+      success: false,
+      message: "Lỗi khi thêm đánh giá: " + error.message,
+    })
+  }
+}
+
+// Cập nhật bình luận
+const updateComment = async (req, res) => {
+  try {
+    const { commentId, rating, comment, userId } = req.body
+
+    console.log("Updating comment:", { commentId, rating, comment, userId })
+
+    // Validate required fields
+    if (!commentId || !rating || !comment || !userId) {
+      return res.json({
+        success: false,
+        message: "Thiếu thông tin bắt buộc",
+      })
+    }
+
+    // Validate commentId
+    if (!mongoose.Types.ObjectId.isValid(commentId)) {
+      return res.json({ success: false, message: "ID đánh giá không hợp lệ" })
+    }
+
+    // Validate userId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.json({ success: false, message: "ID người dùng không hợp lệ" })
+    }
+
+    // Tìm comment
+    const existingComment = await commentModel.findById(commentId)
+    if (!existingComment) {
+      return res.json({ success: false, message: "Không tìm thấy đánh giá" })
+    }
+
+    // Kiểm tra quyền sở hữu
+    if (existingComment.userId.toString() !== userId) {
+      return res.json({ success: false, message: "Bạn chỉ có thể sửa đánh giá của chính mình" })
+    }
+
+    // Cập nhật comment
+    const updatedComment = await commentModel.findByIdAndUpdate(
+      commentId,
+      {
+        rating: Number(rating),
+        comment: comment.trim(),
+        updatedAt: new Date(),
+      },
+      { new: true },
+    )
+
+    console.log("Comment updated successfully:", updatedComment._id)
+
+    res.json({
+      success: true,
+      message: "Cập nhật đánh giá thành công",
+      data: {
+        _id: updatedComment._id,
+        userId: updatedComment.userId,
+        userName: updatedComment.userName,
+        foodId: updatedComment.foodId,
+        rating: updatedComment.rating,
+        comment: updatedComment.comment,
+        createdAt: updatedComment.createdAt,
+        updatedAt: updatedComment.updatedAt,
+        adminReply: updatedComment.adminReply,
+      },
+    })
+  } catch (error) {
+    console.error("Error updating comment:", error)
+    res.json({
+      success: false,
+      message: "Lỗi khi cập nhật đánh giá: " + error.message,
+    })
   }
 }
 
@@ -62,23 +161,16 @@ const getCommentsByFood = async (req, res) => {
     const { foodId } = req.params
     console.log("Getting comments for food:", foodId)
 
-    // Validate foodId
-    if (!foodId || !mongoose.Types.ObjectId.isValid(foodId)) {
-      console.log("Invalid foodId:", foodId)
+    if (!mongoose.Types.ObjectId.isValid(foodId)) {
       return res.json({ success: false, message: "ID sản phẩm không hợp lệ" })
     }
 
-    const comments = await commentModel
-      .find({
-        foodId,
-        isApproved: true,
-      })
-      .sort({ createdAt: -1 })
+    const comments = await commentModel.find({ foodId, isApproved: true }).sort({ createdAt: -1 })
 
     console.log(`Found ${comments.length} comments for food ${foodId}`)
     res.json({ success: true, data: comments })
   } catch (error) {
-    console.log("Error getting comments by food:", error)
+    console.error("Error getting comments:", error)
     res.json({ success: false, message: "Lỗi khi lấy danh sách đánh giá" })
   }
 }
@@ -86,81 +178,21 @@ const getCommentsByFood = async (req, res) => {
 // Lấy tất cả bình luận (cho admin)
 const getAllComments = async (req, res) => {
   try {
-    console.log("Getting all comments")
     const comments = await commentModel.find({}).sort({ createdAt: -1 })
-    console.log(`Found ${comments.length} total comments`)
     res.json({ success: true, data: comments })
   } catch (error) {
-    console.log("Error getting all comments:", error)
+    console.error("Error getting all comments:", error)
     res.json({ success: false, message: "Lỗi khi lấy danh sách đánh giá" })
   }
 }
 
-// Phê duyệt/từ chối bình luận
-const updateCommentStatus = async (req, res) => {
-  try {
-    const { id, isApproved } = req.body
-    console.log("Updating comment status:", { id, isApproved })
-
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      console.log("Invalid comment ID:", id)
-      return res.json({ success: false, message: "ID đánh giá không hợp lệ" })
-    }
-
-    const updatedComment = await commentModel.findByIdAndUpdate(id, { isApproved }, { new: true })
-
-    if (!updatedComment) {
-      console.log("Comment not found with ID:", id)
-      return res.json({ success: false, message: "Không tìm thấy đánh giá" })
-    }
-
-    console.log("Comment status updated successfully:", updatedComment._id)
-    res.json({ success: true, message: "Cập nhật trạng thái đánh giá thành công" })
-  } catch (error) {
-    console.log("Error updating comment status:", error)
-    res.json({ success: false, message: "Lỗi khi cập nhật trạng thái đánh giá" })
-  }
-}
-
-// Xóa bình luận
-const deleteComment = async (req, res) => {
-  try {
-    const { id } = req.body
-    console.log("Deleting comment:", id)
-
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      console.log("Invalid comment ID:", id)
-      return res.json({ success: false, message: "ID đánh giá không hợp lệ" })
-    }
-
-    const deletedComment = await commentModel.findByIdAndDelete(id)
-
-    if (!deletedComment) {
-      console.log("Comment not found with ID:", id)
-      return res.json({ success: false, message: "Không tìm thấy đánh giá" })
-    }
-
-    console.log("Comment deleted successfully:", id)
-    res.json({ success: true, message: "Xóa đánh giá thành công" })
-  } catch (error) {
-    console.log("Error deleting comment:", error)
-    res.json({ success: false, message: "Lỗi khi xóa đánh giá" })
-  }
-}
-
-// Reply to a comment
+// Phản hồi bình luận
 const replyToComment = async (req, res) => {
   try {
     const { id, message } = req.body
-    console.log("Replying to comment:", { id, message })
 
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      console.log("Invalid comment ID:", id)
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.json({ success: false, message: "ID đánh giá không hợp lệ" })
-    }
-
-    if (!message) {
-      return res.json({ success: false, message: "Nội dung phản hồi không được để trống" })
     }
 
     const updatedComment = await commentModel.findByIdAndUpdate(
@@ -175,16 +207,111 @@ const replyToComment = async (req, res) => {
     )
 
     if (!updatedComment) {
-      console.log("Comment not found with ID:", id)
       return res.json({ success: false, message: "Không tìm thấy đánh giá" })
     }
 
-    console.log("Comment reply added successfully:", updatedComment._id)
     res.json({ success: true, message: "Thêm phản hồi thành công" })
   } catch (error) {
-    console.log("Error replying to comment:", error)
+    console.error("Error replying to comment:", error)
     res.json({ success: false, message: "Lỗi khi thêm phản hồi" })
   }
 }
 
-export { addComment, getCommentsByFood, getAllComments, updateCommentStatus, deleteComment, replyToComment }
+// Xóa bình luận
+const deleteComment = async (req, res) => {
+  try {
+    const { id } = req.body
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.json({ success: false, message: "ID đánh giá không hợp lệ" })
+    }
+
+    const deletedComment = await commentModel.findByIdAndDelete(id)
+
+    if (!deletedComment) {
+      return res.json({ success: false, message: "Không tìm thấy đánh giá" })
+    }
+
+    res.json({ success: true, message: "Xóa đánh giá thành công" })
+  } catch (error) {
+    console.error("Error deleting comment:", error)
+    res.json({ success: false, message: "Lỗi khi xóa đánh giá" })
+  }
+}
+
+// Lấy thống kê rating của sản phẩm
+const getFoodRatingStats = async (req, res) => {
+  try {
+    const { foodId } = req.params
+
+    if (!mongoose.Types.ObjectId.isValid(foodId)) {
+      return res.json({ success: false, message: "ID sản phẩm không hợp lệ" })
+    }
+
+    const comments = await commentModel.find({ foodId, isApproved: true })
+
+    if (comments.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          averageRating: 0,
+          totalReviews: 0,
+          ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        },
+      })
+    }
+
+    const totalRating = comments.reduce((sum, comment) => sum + comment.rating, 0)
+    const averageRating = totalRating / comments.length
+
+    const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+    comments.forEach((comment) => {
+      ratingDistribution[comment.rating]++
+    })
+
+    res.json({
+      success: true,
+      data: {
+        averageRating: Math.round(averageRating * 10) / 10,
+        totalReviews: comments.length,
+        ratingDistribution,
+      },
+    })
+  } catch (error) {
+    console.error("Error getting rating stats:", error)
+    res.json({ success: false, message: "Lỗi khi lấy thống kê đánh giá" })
+  }
+}
+
+// Cập nhật trạng thái bình luận
+const updateCommentStatus = async (req, res) => {
+  try {
+    const { id, isApproved } = req.body
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.json({ success: false, message: "ID đánh giá không hợp lệ" })
+    }
+
+    const updatedComment = await commentModel.findByIdAndUpdate(id, { isApproved }, { new: true })
+
+    if (!updatedComment) {
+      return res.json({ success: false, message: "Không tìm thấy đánh giá" })
+    }
+
+    res.json({ success: true, message: "Cập nhật trạng thái đánh giá thành công" })
+  } catch (error) {
+    console.error("Error updating comment status:", error)
+    res.json({ success: false, message: "Lỗi khi cập nhật trạng thái đánh giá" })
+  }
+}
+
+export {
+  addComment,
+  updateComment,
+  getCommentsByFood,
+  getAllComments,
+  updateCommentStatus,
+  deleteComment,
+  replyToComment,
+  getFoodRatingStats,
+}

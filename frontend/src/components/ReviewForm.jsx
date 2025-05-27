@@ -7,7 +7,7 @@ import axios from "axios"
 import { StoreContext } from "../context/StoreContext"
 
 const ReviewForm = ({ foodId, onReviewSubmitted, onCancel }) => {
-  const { url, user, token } = useContext(StoreContext)
+  const { url, token } = useContext(StoreContext)
   const [rating, setRating] = useState(5)
   const [hoverRating, setHoverRating] = useState(0)
   const [comment, setComment] = useState("")
@@ -17,15 +17,16 @@ const ReviewForm = ({ foodId, onReviewSubmitted, onCancel }) => {
   // Load user data on component mount
   useEffect(() => {
     const loadUserData = async () => {
-      // First try to get user from context
-      if (user && user._id) {
-        console.log("Using user data from context:", user)
-        setUserData(user)
-        return
-      }
-
-      // Then try to get from localStorage
       try {
+        // Get token from localStorage or context
+        const authToken = token || localStorage.getItem("token")
+
+        if (!authToken) {
+          console.log("No token found")
+          return
+        }
+
+        // Try to get user from localStorage first
         const storedUser = localStorage.getItem("user")
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser)
@@ -33,60 +34,32 @@ const ReviewForm = ({ foodId, onReviewSubmitted, onCancel }) => {
           setUserData(parsedUser)
           return
         }
-      } catch (error) {
-        console.error("Error parsing user data from localStorage:", error)
-      }
 
-      // If still no user data, try to fetch from API
-      const storedToken = localStorage.getItem("token")
-      if (storedToken) {
-        try {
-          console.log("Fetching user data from API with token:", storedToken)
-          const response = await axios.get(`${url}/api/user/profile`, {
-            headers: { token: storedToken },
-          })
+        // If no stored user, fetch from API
+        console.log("Fetching user data from API")
+        const response = await axios.get(`${url}/api/user/profile`, {
+          headers: { token: authToken },
+        })
 
-          if (response.data.success && response.data.user) {
-            console.log("Retrieved user data from API:", response.data.user)
-            setUserData(response.data.user)
-            localStorage.setItem("user", JSON.stringify(response.data.user))
-            return
-          }
-        } catch (error) {
-          console.error("Error fetching user data from API:", error)
+        if (response.data.success && response.data.user) {
+          console.log("Retrieved user data from API:", response.data.user)
+          setUserData(response.data.user)
+          localStorage.setItem("user", JSON.stringify(response.data.user))
         }
+      } catch (error) {
+        console.error("Error loading user data:", error)
       }
-
-      console.warn("Could not load user data from any source")
     }
 
     loadUserData()
-  }, [user, url])
+  }, [token, url])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // Get token from localStorage
-    const storedToken = localStorage.getItem("token")
-
-    // Check if user is logged in
-    if (!storedToken) {
-      toast.error("Vui lòng đăng nhập để đánh giá")
-      return
-    }
-
-    console.log("Using token for review submission:", storedToken)
-
-    // Check if we have user data
+    // Validate inputs
     if (!userData || !userData._id) {
-      console.error("No user data available:", {
-        contextUser: user,
-        localUserData: userData,
-        localStorageToken: storedToken,
-        localStorageUser: localStorage.getItem("user"),
-      })
-
-      toast.error("Không thể xác định thông tin người dùng, vui lòng đăng nhập lại")
+      toast.error("Vui lòng đăng nhập để đánh giá")
       return
     }
 
@@ -100,28 +73,40 @@ const ReviewForm = ({ foodId, onReviewSubmitted, onCancel }) => {
       return
     }
 
+    if (rating < 1 || rating > 5) {
+      toast.error("Vui lòng chọn số sao từ 1 đến 5")
+      return
+    }
+
     try {
       setIsSubmitting(true)
+
+      const authToken = token || localStorage.getItem("token")
+
+      if (!authToken) {
+        toast.error("Vui lòng đăng nhập để đánh giá")
+        return
+      }
 
       console.log("Submitting review with:", {
         userId: userData._id,
         foodId,
         rating,
-        comment,
+        comment: comment.trim(),
       })
 
-      // Use the token directly in the headers
       const response = await axios.post(
         `${url}/api/comment/add`,
         {
           userId: userData._id,
           foodId,
-          rating,
-          comment,
+          rating: Number(rating),
+          comment: comment.trim(),
         },
         {
           headers: {
-            token: storedToken, // Use 'token' instead of 'Authorization'
+            token: authToken,
+            "Content-Type": "application/json",
           },
         },
       )
@@ -129,27 +114,34 @@ const ReviewForm = ({ foodId, onReviewSubmitted, onCancel }) => {
       console.log("Review submission response:", response.data)
 
       if (response.data.success) {
-        toast.success("Đánh giá của bạn đã được gửi thành công")
+        toast.success("Đánh giá của bạn đã được gửi thành công!")
+
+        // Reset form
         setComment("")
         setRating(5)
-        if (onReviewSubmitted) {
-          onReviewSubmitted({
-            _id: response.data.commentId || Date.now(),
-            userId: userData._id,
-            foodId,
-            rating,
-            comment,
-            userName: userData.name,
-            createdAt: new Date(),
-            isApproved: true,
-          })
+
+        // Call callback if provided
+        if (onReviewSubmitted && response.data.data) {
+          onReviewSubmitted(response.data.data)
+        }
+
+        // Call cancel to close form
+        if (onCancel) {
+          onCancel()
         }
       } else {
         toast.error(response.data.message || "Có lỗi xảy ra khi gửi đánh giá")
       }
     } catch (error) {
       console.error("Error submitting review:", error)
-      toast.error("Có lỗi xảy ra khi gửi đánh giá: " + (error.response?.data?.message || error.message))
+
+      if (error.response?.status === 401) {
+        toast.error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại")
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
+      } else {
+        toast.error("Có lỗi xảy ra khi gửi đánh giá: " + (error.response?.data?.message || error.message))
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -167,7 +159,7 @@ const ReviewForm = ({ foodId, onReviewSubmitted, onCancel }) => {
         </div>
       ) : (
         <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-          <p className="text-sm text-yellow-700 dark:text-yellow-400">Đang tải thông tin người dùng...</p>
+          <p className="text-sm text-yellow-700 dark:text-yellow-400">Vui lòng đăng nhập để có thể đánh giá sản phẩm</p>
         </div>
       )}
 
@@ -216,7 +208,9 @@ const ReviewForm = ({ foodId, onReviewSubmitted, onCancel }) => {
             placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-dark text-gray-700 dark:text-gray-300"
             required
+            minLength={5}
           />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Tối thiểu 5 ký tự ({comment.length}/5)</p>
         </div>
 
         <div className="flex justify-end space-x-3">
@@ -231,8 +225,8 @@ const ReviewForm = ({ foodId, onReviewSubmitted, onCancel }) => {
           )}
           <button
             type="submit"
-            disabled={isSubmitting || !userData}
-            className="px-4 py-2 bg-primary hover:bg-primary-light text-dark rounded-lg transition-colors disabled:opacity-50"
+            disabled={isSubmitting || !userData || comment.trim().length < 5}
+            className="px-4 py-2 bg-primary hover:bg-primary-light text-dark rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? "Đang gửi..." : "Gửi đánh giá"}
           </button>

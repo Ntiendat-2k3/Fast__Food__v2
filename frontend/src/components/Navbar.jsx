@@ -4,7 +4,7 @@ import { useState, useContext, useEffect } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { StoreContext } from "../context/StoreContext"
 import { useTheme } from "../context/ThemeContext"
-import { ShoppingCart, User, LogOut, Package, Menu, X, Sun, Moon, Bell } from "lucide-react"
+import { ShoppingCart, User, LogOut, Package, Menu, X, Sun, Moon, Bell, Heart } from "lucide-react"
 import axios from "axios"
 
 const Navbar = ({ setShowLogin }) => {
@@ -18,6 +18,7 @@ const Navbar = ({ setShowLogin }) => {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [wishlistCount, setWishlistCount] = useState(0)
 
   // Handle scroll effect
   useEffect(() => {
@@ -79,6 +80,33 @@ const Navbar = ({ setShowLogin }) => {
     }
   }, [token, url])
 
+  // Fetch wishlist count
+  useEffect(() => {
+    const fetchWishlistCount = async () => {
+      if (!token) return
+
+      try {
+        const response = await axios.post(
+          `${url}/api/wishlist/get`,
+          {},
+          {
+            headers: { token },
+          },
+        )
+
+        if (response.data.success) {
+          setWishlistCount(response.data.data.length)
+        }
+      } catch (error) {
+        console.error("Error fetching wishlist count:", error)
+      }
+    }
+
+    if (token) {
+      fetchWishlistCount()
+    }
+  }, [token, url])
+
   const markAsRead = async (notificationId) => {
     if (!token) return
 
@@ -104,6 +132,7 @@ const Navbar = ({ setShowLogin }) => {
     localStorage.removeItem("user")
     setToken("")
     setUser(null)
+    setWishlistCount(0)
     navigate("/")
   }
 
@@ -282,6 +311,18 @@ const Navbar = ({ setShowLogin }) => {
               </div>
             )}
 
+            {/* Wishlist */}
+            {token && (
+              <Link to="/wishlist" className="relative p-2 text-white hover:text-primary transition-colors">
+                <Heart size={24} />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
             <Link to="/cart" className="relative p-2 text-white hover:text-primary transition-colors">
               <ShoppingCart size={24} />
               {totalItems > 0 && (
@@ -316,6 +357,14 @@ const Navbar = ({ setShowLogin }) => {
                         Hi, <span className="text-primary">{user?.name}</span>
                       </p>
                     </div>
+                    <Link
+                      to="/wishlist"
+                      className="block px-4 py-2 text-sm text-white hover:bg-dark hover:text-primary flex items-center"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <Heart size={16} className="mr-2" />
+                      Danh sách yêu thích
+                    </Link>
                     <Link
                       to="/myorders"
                       className="block px-4 py-2 text-sm text-white hover:bg-dark hover:text-primary flex items-center"
@@ -383,6 +432,25 @@ const Navbar = ({ setShowLogin }) => {
               >
                 Thực đơn
               </Link>
+              {token && (
+                <Link
+                  to="/wishlist"
+                  className={`font-medium transition-colors py-2 px-4 rounded-lg flex items-center ${
+                    location.pathname === "/wishlist"
+                      ? "text-primary bg-dark-lighter"
+                      : "text-white hover:text-primary hover:bg-dark-lighter"
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Heart size={16} className="mr-2" />
+                  Yêu thích
+                  {wishlistCount > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Link>
+              )}
               <Link
                 to="/myorders"
                 className={`font-medium transition-colors py-2 px-4 rounded-lg ${

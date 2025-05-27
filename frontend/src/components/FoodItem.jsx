@@ -7,7 +7,7 @@ import { ShoppingCart, Star, Check } from "lucide-react"
 import { motion } from "framer-motion"
 import { slugify } from "../utils/slugify"
 
-function FoodItem({ name, price, description, image, index }) {
+function FoodItem({ name, price, description, image, index, _id, rating = 0, totalReviews = 0 }) {
   const { url, addToCart } = useContext(StoreContext)
   const navigate = useNavigate()
   const [isAdding, setIsAdding] = useState(false)
@@ -40,12 +40,14 @@ function FoodItem({ name, price, description, image, index }) {
           alt={name}
           className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
         />
-        <div className="absolute top-2 right-2 bg-white dark:bg-dark-lighter rounded-full p-1 shadow-sm">
-          <div className="flex items-center">
-            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-            <span className="text-xs font-medium ml-1 text-dark dark:text-white">4.8</span>
+        {totalReviews > 0 && (
+          <div className="absolute top-2 right-2 bg-white dark:bg-dark-lighter rounded-full p-1 shadow-sm">
+            <div className="flex items-center">
+              <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+              <span className="text-xs font-medium ml-1 text-dark dark:text-white">{rating.toFixed(1)}</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
       <div className="p-4 flex-1 flex flex-col">
         <h3 className="text-lg font-bold text-dark dark:text-white mb-1 truncate">{name}</h3>
