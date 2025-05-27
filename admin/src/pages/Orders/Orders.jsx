@@ -224,11 +224,11 @@ const Orders = ({ url }) => {
   const currentItems = getCurrentItems()
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="bg-white dark:bg-dark-light rounded-2xl shadow-custom p-6 mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Quản lý đơn hàng</h1>
+    <div className="w-full">
+      <div className="bg-white dark:bg-dark-light md:rounded-2xl md:shadow-custom p-3 md:p-6 mb-4 md:mb-8">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white mb-4 md:mb-6">Quản lý đơn hàng</h1>
 
-        <div className="flex flex-col md:flex-row justify-between gap-3 mb-6">
+        <div className="flex flex-col md:flex-row justify-between gap-3 mb-4 md:mb-6">
           {/* Search Bar */}
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -276,11 +276,11 @@ const Orders = ({ url }) => {
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           </div>
         ) : filteredOrders.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {currentItems.map((order) => (
               <div
                 key={order._id}
-                className="bg-white dark:bg-dark rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-dark-lighter"
+                className="bg-white dark:bg-dark md:rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-dark-lighter"
               >
                 {/* Order Header */}
                 <div className="bg-gray-50 dark:bg-dark-lighter p-3 sm:p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-200 dark:border-dark-lighter">
@@ -391,10 +391,12 @@ const Orders = ({ url }) => {
             ))}
 
             {/* Pagination */}
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+            <div className="px-3 md:px-0">
+              <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+            </div>
           </div>
         ) : (
-          <div className="text-center py-12 bg-gray-50 dark:bg-dark-lighter rounded-xl">
+          <div className="text-center py-12 bg-gray-50 dark:bg-dark-lighter md:rounded-xl">
             <Package size={64} className="mx-auto mb-4 text-gray-400" />
             <h3 className="text-xl text-gray-500 dark:text-gray-400 mb-2">Không có đơn hàng nào</h3>
             <p className="text-gray-400 dark:text-gray-500">Chưa có đơn hàng nào phù hợp với tìm kiếm của bạn</p>

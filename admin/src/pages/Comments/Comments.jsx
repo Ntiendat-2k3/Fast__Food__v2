@@ -715,17 +715,17 @@ const Comments = ({ url }) => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="bg-white dark:bg-dark-light rounded-2xl shadow-custom p-6 mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center">
+    <div className="w-full">
+      <div className="bg-white dark:bg-dark-light md:rounded-2xl md:shadow-custom p-3 md:p-6 mb-4 md:mb-8">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white mb-4 md:mb-6 flex items-center">
           <MessageSquare className="mr-2" size={24} />
           Quản lý người dùng
         </h1>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto">
+        <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4 md:mb-6 overflow-x-auto">
           <button
-            className={`py-3 px-4 font-medium text-sm flex items-center whitespace-nowrap ${
+            className={`py-3 px-3 md:px-4 font-medium text-sm flex items-center whitespace-nowrap ${
               activeTab === "comments"
                 ? "text-primary border-b-2 border-primary"
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
@@ -736,7 +736,7 @@ const Comments = ({ url }) => {
             Đánh giá sản phẩm
           </button>
           <button
-            className={`py-3 px-4 font-medium text-sm flex items-center whitespace-nowrap ${
+            className={`py-3 px-3 md:px-4 font-medium text-sm flex items-center whitespace-nowrap ${
               activeTab === "notifications"
                 ? "text-primary border-b-2 border-primary"
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
@@ -747,7 +747,7 @@ const Comments = ({ url }) => {
             Thông báo
           </button>
           <button
-            className={`py-3 px-4 font-medium text-sm flex items-center whitespace-nowrap ${
+            className={`py-3 px-3 md:px-4 font-medium text-sm flex items-center whitespace-nowrap ${
               activeTab === "blacklist"
                 ? "text-primary border-b-2 border-primary"
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"

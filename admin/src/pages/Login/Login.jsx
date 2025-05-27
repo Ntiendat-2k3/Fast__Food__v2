@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import axios from "axios"
 import { toast } from "react-toastify"
@@ -15,13 +15,14 @@ const Login = ({ url, onLogin, isAuthenticated }) => {
 
   const navigate = useNavigate()
   const location = useLocation()
-  const from = location.state?.from?.pathname || "/"
+  const from = location.state?.from?.pathname || "/revenue"
 
   // If already authenticated, redirect to the intended page
-  if (isAuthenticated) {
-    navigate(from, { replace: true })
-    return null
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(from, { replace: true })
+    }
+  }, [isAuthenticated, navigate, from])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -40,7 +41,7 @@ const Login = ({ url, onLogin, isAuthenticated }) => {
           toast.success("Đăng nhập thành công!")
           // Call the onLogin function with the token
           onLogin(response.data.token)
-          // Redirect to the page they tried to visit or home
+          // Redirect to the page they tried to visit or revenue page
           navigate(from, { replace: true })
         } else {
           setError("Bạn không có quyền truy cập vào trang quản trị.")
@@ -57,6 +58,11 @@ const Login = ({ url, onLogin, isAuthenticated }) => {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Don't render login form if already authenticated
+  if (isAuthenticated) {
+    return null
   }
 
   return (

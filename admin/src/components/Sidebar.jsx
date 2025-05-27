@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Moon,
   Sun,
+  Plus,
 } from "lucide-react"
 import { useTheme } from "../context/ThemeContext"
 
@@ -45,7 +46,12 @@ const Sidebar = ({ onLogout }) => {
 
   const menuItems = [
     {
-      path: "/",
+      path: "/revenue",
+      name: "Doanh thu",
+      icon: <PieChart size={20} />,
+    },
+    {
+      path: "/orders",
       name: "Đơn hàng",
       icon: <ShoppingCart size={20} />,
     },
@@ -57,12 +63,7 @@ const Sidebar = ({ onLogout }) => {
     {
       path: "/add",
       name: "Thêm sản phẩm",
-      icon: <Home size={20} />,
-    },
-    {
-      path: "/revenue",
-      name: "Doanh thu",
-      icon: <PieChart size={20} />,
+      icon: <Plus size={20} />,
     },
     {
       path: "/vouchers",
@@ -126,7 +127,7 @@ const Sidebar = ({ onLogout }) => {
         }`}
       >
         <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
-          <Link to="/" className="flex items-center space-x-2" onClick={closeSidebar}>
+          <Link to="/revenue" className="flex items-center space-x-2" onClick={closeSidebar}>
             <img src="/logo.png" alt="Logo" className="h-7 w-auto" />
             <span className="text-lg font-bold text-primary">Admin</span>
           </Link>

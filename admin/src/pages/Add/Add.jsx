@@ -68,16 +68,16 @@ const Add = ({ url }) => {
   const categories = ["Burger", "Burito", "Gà", "Hot dog", "Pasta", "Salad", "Sandwich", "Tart"]
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-white dark:bg-dark-light rounded-2xl shadow-custom p-6 mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center">
+    <div className="w-full">
+      <div className="bg-white dark:bg-dark-light md:rounded-2xl md:shadow-custom p-3 md:p-6 mb-4 md:mb-8">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white mb-4 md:mb-6 flex items-center">
           <Save className="mr-2" size={24} />
           Thêm sản phẩm mới
         </h1>
 
-        <form onSubmit={onSubmitHandler} className="space-y-6">
+        <form onSubmit={onSubmitHandler} className="space-y-4 md:space-y-6">
           {/* Image Upload Section */}
-          <div className="mb-5">
+          <div className="mb-4 md:mb-5">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Hình ảnh sản phẩm</label>
             <div className="flex items-center justify-center">
               <div className="w-full">
@@ -86,7 +86,7 @@ const Add = ({ url }) => {
                     <img
                       src={imagePreview || "/placeholder.svg"}
                       alt="Preview"
-                      className="h-56 w-full object-cover rounded-lg"
+                      className="h-48 md:h-56 w-full object-cover rounded-lg"
                     />
                     <button
                       type="button"
@@ -100,7 +100,7 @@ const Add = ({ url }) => {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-56 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-dark hover:bg-gray-100 dark:hover:bg-dark-lighter transition-colors">
+                  <label className="flex flex-col items-center justify-center w-full h-48 md:h-56 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-dark hover:bg-gray-100 dark:hover:bg-dark-lighter transition-colors">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <Upload className="w-10 h-10 mb-3 text-gray-400" />
                       <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
@@ -122,7 +122,7 @@ const Add = ({ url }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
             {/* Product Name */}
             <div>
               <label
@@ -225,7 +225,7 @@ const Add = ({ url }) => {
           </div>
 
           {/* Submit Button */}
-          <div className="mt-6">
+          <div className="mt-4 md:mt-6">
             <button
               type="submit"
               className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-dark font-medium py-2.5 px-6 rounded-lg transition-colors flex items-center justify-center"

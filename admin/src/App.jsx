@@ -19,6 +19,7 @@ import Chat from "./pages/Chat/Chat"
 const App = () => {
   const url = "http://localhost:4000"
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const location = useLocation()
 
   useEffect(() => {
@@ -27,6 +28,7 @@ const App = () => {
     if (token) {
       setIsAuthenticated(true)
     }
+    setIsLoading(false)
   }, [])
 
   // Function to handle login
@@ -43,6 +45,14 @@ const App = () => {
 
   // Protected route component
   const ProtectedRoute = ({ children }) => {
+    if (isLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      )
+    }
+
     if (!isAuthenticated) {
       // Redirect to login with the return url
       return <Navigate to="/login" state={{ from: location }} replace />
@@ -50,13 +60,22 @@ const App = () => {
     return children
   }
 
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-gray-50 dark:bg-dark text-gray-900 dark:text-white transition-colors duration-300">
         <ToastContainer />
         {isAuthenticated && <Sidebar onLogout={handleLogout} />}
-        <main className={isAuthenticated ? "md:ml-64 pt-20 md:pt-0 transition-all duration-300" : ""}>
-          <div className="container mx-auto px-4 py-6">
+        <main className={isAuthenticated ? "md:ml-64 pt-16 md:pt-0 transition-all duration-300" : ""}>
+          <div className={isAuthenticated ? "px-0 py-0 md:px-4 md:py-6" : "container mx-auto px-4 py-6"}>
             <Routes>
               <Route
                 path="/login"
@@ -79,7 +98,7 @@ const App = () => {
                 }
               />
               <Route
-                path="/"
+                path="/orders"
                 element={
                   <ProtectedRoute>
                     <Orders url={url} />
@@ -118,7 +137,27 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/chat" element={<Chat />} />
+              <Route
+                path="/chat"
+                element={
+                  <ProtectedRoute>
+                    <Chat />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Default route - redirect to revenue */}
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Navigate to="/revenue" replace />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="*"
+                element={isAuthenticated ? <Navigate to="/revenue" replace /> : <Navigate to="/login" replace />}
+              />
             </Routes>
           </div>
         </main>
