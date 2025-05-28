@@ -12,6 +12,7 @@ import messageRouter from "./routes/messageRoute.js"
 import notificationRouter from "./routes/notificationRoute.js"
 import voucherRouter from "./routes/voucherRoute.js"
 import wishlistRouter from "./routes/wishlistRoute.js"
+import aiRouter from "./routes/aiRoute.js"
 import "dotenv/config"
 
 // app config
@@ -37,6 +38,7 @@ app.use("/api/message", messageRouter)
 app.use("/api/notification", notificationRouter)
 app.use("/api/voucher", voucherRouter)
 app.use("/api/wishlist", wishlistRouter)
+app.use("/api/ai", aiRouter)
 app.use("/images", express.static("uploads"))
 
 app.get("/", (req, res) => {
